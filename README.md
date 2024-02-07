@@ -1,7 +1,7 @@
 # B3 Data Engineering
 
 Projeto de Engenharia de Dados (ED) que terá como fonte primária os dados da Bolsa de Valores do Brasil visando a aprendizagem, a fixação e o repasse de conhecimentos para outros interessados na área.
-A sua implementação será gradual e pormenorizada em etapas. Assim, serão criados *branchs* para cada etapa distinta de desenvolvimento e, cada uma delas, serão *"mergeadas"* na *main* à medida que avançarmos.
+Sua implementação será gradual e dividada em etapas para melhor entendimento de quem está aprendendo. Assim, serão criados *branchs* para cada etapa distinta de desenvolvimento e, cada uma delas, serão *"mergeadas"* na *main* à medida que avançarmos.
 
 # Índice
 
@@ -13,11 +13,11 @@ A sua implementação será gradual e pormenorizada em etapas. Assim, serão cri
 
 ## Sobre Mim
 
-Como aqui não tenho interesse em falar muito sobre mim (vide [LinkedIn][1]), falarei apenas que: já trabalho na área de TI desde 1992 como desenvolvedor de software e em 2019 me despertou o interesse pelo *Big Data*. Fiz alguns cursos, li muito e em Fev/22 tive a oportunidade de trabalhar exclusivamente como ED.
+Como aqui não tenho interesse em falar muito sobre mim (vide [LinkedIn][1]), falarei apenas que: já trabalho na área de TI desde 1992 como desenvolvedor de software e em 2019 me despertou o interesse pelo *Big Data*. Fiz alguns cursos, li muito e em Fev/22 tive a primeira oportunidade de trabalhar exclusivamente como ED.
 
 ## Objetivos do Projeto
 
-Tendo como interesse desenvolver um projeto que abranja o máximo de **hard skills* possíveis para aprendizado e fixação de conhecimentos, buscarei interagir com:
+Tendo como interesse desenvolver um projeto que abranja o máximo de **hard skills* possíveis para aprendizado, fixação de conhecimentos e - por quê não? - demonstrar aos recrutadores as habilidades adquiridas, buscarei interagir com:
 - [ ] **Docker** para desenvolvimento local
 - [ ] **Minikube** para orquestração de containers
 - [ ] **Airflow** para orquestração de pipeline
@@ -31,10 +31,10 @@ Obs 2: A ideia é deixar o projeto totalmente reproduzível para aqueles que que
 
 ## Sobre a modularização do projeto em *branchs*
 
-Haverá a branch principal (*main*) que contemplará o projeto como um todo. Todas as demais *branchs* estarão no escopo da stack de aplicação do projeto. Com isto busco criar uma leitura do tipo passo a passo e, assim, facilitar o entendimento de quem quer aprender. Pois em cada branch estará sendo explicados os passos, as configurações, o desenvolvimento de forma evolutiva.
+Haverá a branch principal (*main*) que contemplará o projeto como um todo. Todas as demais *branchs* estarão no escopo da stack de aplicação do projeto. Com isto, busco criar uma leitura do tipo passo a passo e, assim, facilitar o entendimento de quem quer aprender. Em cada branch estarão sendo explicados os passos, as configurações e o desenvolvimento para que a referida etapa aconteça.
 
 # Descrição do Projeto
-A [B3][2] é a Bolsa de Valores do Brasil e passei a ter interesse em investimentos em 2022. Quem investe em ações da B3 está investindo em Renda Variáveis. E todo investidor desta categoria fica sempre de olho no valor da ação e seus possíveis dividendos.
+A [B3][2] é a Bolsa de Valores do Brasil e passei a ter interesse em investimentos em 2022. Quem investe em ações da B3 está investindo em Rendas Variáveis e todo investidor fica sempre de olho no valor da ação e seus possíveis dividendos.
 A B3 disponibiliza para download sempre ao final do dia o [histórico das cotações][3] das ações. Podem ser realizados o download das ações:
 
  - Por ano: onde se escolhe o ano
@@ -53,7 +53,7 @@ O arquivo virá no formato ZIP e contém um ou mais arquivos TXT com os dados da
  - quantidade de negócios e volume negociado com o papel
  - dentre outros dados disponíveis.
 
-O projeto consistirá em realizar o download, processar os arquivos e dados e disponibilizar num DW.
+O projeto consistirá em realizar o download do histórico, processá-lo e disponibilizar os dados num DW para uma visualização no dashboard.
 
 [1]: https://www.linkedin.com/in/airton-carneiro
 [2]: https://www.b3.com.br
