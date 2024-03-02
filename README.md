@@ -16,7 +16,6 @@ Requisitos:
 Usar um programa de sua escolha (conda, pyenv, venv, etc). Neste exemplo usaremos o conda. Acesse o terminal e siga os procedimentos abaixo.
 
     > conda create -n b3 python=3.10
-    > conda activate b3
     > pip install "apache-airflow[celery]==2.8.2" --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.8.2/constraints-3.10.txt"
     > airflow version
 
