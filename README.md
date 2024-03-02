@@ -1,61 +1,34 @@
-# B3 Data Engineering
 
-Projeto de Engenharia de Dados (ED) que terá como fonte primária os dados da Bolsa de Valores do Brasil visando a aprendizagem, a fixação e o repasse de conhecimentos para outros interessados na área.
-Sua implementação será gradual e dividada em etapas para melhor entendimento de quem está aprendendo. Assim, serão criados *branchs* para cada etapa distinta de desenvolvimento e, cada uma delas, serão *"mergeadas"* na *main* à medida que avançarmos.
+# B3 Data Engineering (Airflow-Dev)
 
-# Índice
+  
 
-- Introdução
-	- [Sobre mim](#sobre-mim)
-	- [Objetivos do projeto](#objetivos-do-projeto)
-	- [Sobre a modularização do projeto em *branchs*](#sobre-as-branchs)
-	- [Descrição do Projeto](#descrição-do-projeto)
+Nesta parte do projeto vamos configurar nosso ambiente de desenvolvimento do Airflow e desenvolver nossa DAG. Faremos tudo localmente para testes e depois evoluiremos.
 
-## Sobre Mim
+## Configurando o ambiente
+Requisitos:
+ - Criar um ambiente virtual de desenvolvimento
+ - Instalar o Airflow (pip)
+ - Criar as variáveis de ambiente
+ - Testar o ambiente
 
-Como aqui não tenho interesse em falar muito sobre mim (vide [LinkedIn][1]), falarei apenas que: já trabalho na área de TI desde 1992 como desenvolvedor de software e em 2019 me despertou o interesse pelo *Big Data*. Fiz alguns cursos, li muito e em Fev/22 tive a primeira oportunidade de trabalhar exclusivamente como ED.
+### Criando o ambiente virtual
+Usar um programa de sua escolha (conda, pyenv, venv, etc). Neste exemplo usaremos o conda. Acesse o terminal e siga os procedimentos abaixo.
 
-## Objetivos do Projeto
+    > conda create -n b3 python=3.10
+    > pip install "apache-airflow[celery]==2.8.2" --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.8.2/constraints-3.10.txt"
+    > airflow version
 
-Tendo como interesse desenvolver um projeto que abranja o máximo de **hard skills* possíveis para aprendizado, fixação de conhecimentos e - por quê não? - demonstrar aos recrutadores as habilidades adquiridas, buscarei interagir com:
-- [ ] **Docker** para desenvolvimento local
-- [ ] **Minikube** para orquestração de containers
-- [ ] **Airflow** para orquestração de pipeline
-- [ ] **Apache Spark** para processamento de dados
-- [ ] **Terraform** para IaC
-- [ ] **Armazenamento de Objetos** para armazenamento usando Minio (talvez evoluindo para S3)
- - e outros, tais como: Data Catalog, Trino, DataFlow, CDC, ArgoCD, Dagster, CI/CD, AWS.
+Após isso, crie a variável de ambiente `AIRFLOW_HOME` apontando para a pasta `AIRFLOW`.
+Entre na pasta `AIRFLOW`.
 
-Obs 1: Talvez nem todas as stacks possam ser usadas em conjunto ou, ainda, nem este projeto as suporta. Mas deixo registrado como interesse e, quem sabe, criar um novo projeto que suporte aquelas que não foram utilizadas aqui.
-Obs 2: A ideia é deixar o projeto totalmente reproduzível para aqueles que queiram estudar e/ou melhorá-lo.
+    > export AIRFLOW_HOME=$(PWD)
 
-## Sobre a modularização do projeto em *branchs*
+obs: adeque o comando acima ao seu sistema operacional. No meu caso, estou usando o aplicativo `direnv` (instalado pelo PIP) que automaticamente carrega para as variáveis de ambiente o que está no arquivo `.envrc`.
 
-Haverá a branch principal (*main*) que contemplará o projeto como um todo. Todas as demais *branchs* estarão no escopo da stack de aplicação do projeto. Com isto, busco criar uma leitura do tipo passo a passo e, assim, facilitar o entendimento de quem quer aprender. Em cada branch estarão sendo explicados os passos, as configurações e o desenvolvimento para que a referida etapa aconteça.
+Agora vamos executar o Airflow em modo *Standalone*.
 
-# Descrição do Projeto
-A [B3][2] é a Bolsa de Valores do Brasil e passei a ter interesse em investimentos em 2022. Quem investe em ações da B3 está investindo em Rendas Variáveis e todo investidor fica sempre de olho no valor da ação e seus possíveis dividendos.
-A B3 disponibiliza para download sempre ao final do dia o [histórico das cotações][3] das ações. Podem ser realizados o download das ações:
+    > airflow standalone
 
- - Por ano: onde se escolhe o ano
- - Dos últimos 12 meses: onde se escolhe o mês
- - Por data (do ano corrente): onde se escolhe o mês e dia
-
-O arquivo virá no formato ZIP e contém um ou mais arquivos TXT com os dados das ações:
-
- - nome da empresa
- - código da empresa
- - código da ação
- - código ISIN
- - tipo de mercado (a vista, termo, opções)
- - especificação (ON/PN)
- - preços (anterior, abertura, mínimo, médio, máximo, fechamento)
- - quantidade de negócios e volume negociado com o papel
- - dentre outros dados disponíveis.
-
-O projeto consistirá em realizar o download do histórico, processá-lo e disponibilizar os dados num DW para uma visualização no dashboard.
-
-[1]: https://www.linkedin.com/in/airton-carneiro
-[2]: https://www.b3.com.br
-[3]: https://www.b3.com.br/pt_br/market-data-e-indices/servicos-de-dados/market-data/historico/mercado-a-vista/series-historicas/
-
+Você verá um monte de mensagens surgindo no terminal e, se tudo estiver OK, ele exibirá a mensagem de que o Airflow está rodando e informando para acessar a URL indicada.
+Para realizar o login, usar `admin` como usuário e usar a senha informada no terminal.
