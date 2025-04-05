@@ -11,7 +11,7 @@
     "vscode": {
       "settings": {
         "terminal.integrated.defaultProfile.linux": "bash",
-        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.defaultInterpreterPath": "/opt/venv/bin/python",
         "terminal.integrated.profiles.linux": {
           "bash": {
             "path": "bash",
@@ -30,7 +30,8 @@
     8080
   ],
   "mounts": [
-    "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached"
+    "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
+    "source=${localWorkspaceFolder}/airflow/dags,target=/home/airflow/airflow/dags,type=bind"
   ],
   "remoteUser": "airflow",
   "workspaceFolder": "/workspace",
@@ -39,6 +40,6 @@
   "postStartCommand": "tmux new-session -d -s airflow 'airflow webserver --port 8080' && tmux split-window -t airflow 'airflow scheduler'",
   "containerEnv": {
     "AIRFLOW__CORE__LOAD_EXAMPLES": "false",
-    "AIRFLOW_HOME": "/workspace/airflow"
+    "AIRFLOW_HOME": "/home/airflow/"
   }
 }

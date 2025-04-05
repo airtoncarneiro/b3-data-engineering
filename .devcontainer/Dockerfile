@@ -34,7 +34,6 @@ RUN apt-get update && apt-get install -y \
 
 # Variáveis de ambiente
 ENV PYTHONUNBUFFERED=1 \
-    AIRFLOW_HOME=/workspace/airflow \
     PATH="/opt/venv/bin:$PATH"
 
 # Criação do usuário e diretórios
