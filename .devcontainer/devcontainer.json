@@ -1,4 +1,5 @@
 {
+  "name": "airflow-dev",
   "build": {
     "dockerfile": "Dockerfile",
     "context": ".",
@@ -7,17 +8,36 @@
       "GID": "1000"
     }
   },
+  "workspaceFolder": "/workspace",
+  "mounts": [
+    "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
+    "source=${localWorkspaceFolder}/airflow/dags,target=/home/airflow/airflow/dags,type=bind",
+    "source=${localWorkspaceFolder}/airflow/logs,target=/home/airflow/airflow/logs,type=bind"
+  ],
+  "containerEnv": {
+    "AIRFLOW__CORE__LOAD_EXAMPLES": "false",
+    "AIRFLOW_HOME": "/home/airflow/",
+    "PYTHONPATH": "/workspace:/home/airflow/airflow/dags"
+  },
+  "forwardPorts": [
+    8080
+  ],
+  "remoteUser": "airflow",
+  "postCreateCommand": "/tmp/init-airflow.sh",
+  "postStartCommand": "tmux new-session -d -s airflow 'airflow webserver --port 8080' && tmux split-window -t airflow 'airflow scheduler'",
   "customizations": {
     "vscode": {
       "settings": {
-        "terminal.integrated.defaultProfile.linux": "bash",
         "python.defaultInterpreterPath": "/opt/venv/bin/python",
+        "terminal.integrated.defaultProfile.linux": "bash",
         "terminal.integrated.profiles.linux": {
           "bash": {
             "path": "bash",
             "args": []
           }
-        }
+        },
+        "python.linting.enabled": true,
+        "python.linting.pylintEnabled": true
       },
       "extensions": [
         "ms-python.python",
@@ -25,21 +45,5 @@
         "ms-azuretools.vscode-docker"
       ]
     }
-  },
-  "forwardPorts": [
-    8080
-  ],
-  "mounts": [
-    "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
-    "source=${localWorkspaceFolder}/airflow/dags,target=/home/airflow/airflow/dags,type=bind"
-  ],
-  "remoteUser": "airflow",
-  "workspaceFolder": "/workspace",
-  "postCreateCommand": "/tmp/init-airflow.sh",
-  "name": "airflow-dev",
-  "postStartCommand": "tmux new-session -d -s airflow 'airflow webserver --port 8080' && tmux split-window -t airflow 'airflow scheduler'",
-  "containerEnv": {
-    "AIRFLOW__CORE__LOAD_EXAMPLES": "false",
-    "AIRFLOW_HOME": "/home/airflow/"
   }
 }
