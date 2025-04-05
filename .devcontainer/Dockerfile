@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Cria e ativa ambiente virtual
+# Cria e ativa ambiente virtual 
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
@@ -34,13 +34,13 @@ RUN apt-get update && apt-get install -y \
 
 # Variáveis de ambiente
 ENV PYTHONUNBUFFERED=1 \
-    AIRFLOW_HOME=/home/airflow \
+    AIRFLOW_HOME=/workspace/airflow \
     PATH="/opt/venv/bin:$PATH"
 
 # Criação do usuário e diretórios
 RUN groupadd -g 1000 airflow && \
     useradd -m -u 1000 -g 1000 -s /bin/bash airflow && \
-    mkdir -p /home/airflow /workspace/airflow/dags /workspace/airflow/logs /workspace/airflow/plugins && \
+    mkdir -p /workspace/airflow/dags /workspace/airflow/logs /workspace/airflow/plugins && \
     chown -R airflow:airflow /home/airflow /workspace
 
 # Copia o ambiente virtual do estágio de build

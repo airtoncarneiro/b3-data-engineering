@@ -38,6 +38,7 @@
   "name": "airflow-dev",
   "postStartCommand": "tmux new-session -d -s airflow 'airflow webserver --port 8080' && tmux split-window -t airflow 'airflow scheduler'",
   "containerEnv": {
-    "AIRFLOW__CORE__LOAD_EXAMPLES": "false"
+    "AIRFLOW__CORE__LOAD_EXAMPLES": "false",
+    "AIRFLOW_HOME": "/workspace/airflow"
   }
 }
