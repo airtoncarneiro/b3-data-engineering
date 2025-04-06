@@ -1,59 +1,120 @@
-# B3 Data Engineering
+# Engenharia de Dados B3
 
-Projeto de Engenharia de Dados (ED) que terá como fonte primária os dados da Bolsa de Valores do Brasil visando a aprendizagem, a fixação e o repasse de conhecimentos para outros interessados na área.
-Sua implementação será gradual e dividada em etapas para melhor entendimento de quem está aprendendo. Assim, serão criados *branchs* para cada etapa distinta de desenvolvimento e, cada uma delas, serão *"mergeadas"* na *main* à medida que avançarmos.
+Projeto de engenharia de dados que extrai, processa e analisa dados históricos de ações da B3 (Bolsa de Valores do Brasil).
 
-# Índice
+## Visão Geral
 
-- Introdução
-	- [Sobre mim](#sobre-mim)
-	- [Objetivos do projeto](#objetivos-do-projeto)
-	- [Sobre a modularização do projeto em *branchs*](#sobre-as-branchs)
-	- [Descrição do Projeto](#descrição-do-projeto)
+Este projeto visa criar um pipeline automatizado para:
+1. Download de dados históricos de ações da B3
+2. Processamento e transformação dos dados
+3. Armazenamento em um data warehouse
+4. Visualização dos resultados em um dashboard
 
-## Sobre Mim
+Os dados incluem informações da empresa, códigos de ações, tipos de mercado, preços (anterior, abertura, mínimo, máximo, fechamento), volume de negociações e mais.
 
-Como aqui não tenho interesse em falar muito sobre mim (vide [LinkedIn][1]), falarei apenas que: já trabalho na área de TI desde 1992 como desenvolvedor de software e em 2019 me despertou o interesse pelo *Big Data*. Fiz alguns cursos, li muito e em Fev/22 tive a primeira oportunidade de trabalhar exclusivamente como ED.
+## Tecnologias Utilizadas
 
-## Objetivos do Projeto
+- **Docker** - Ambiente de desenvolvimento containerizado
+- **Apache Airflow** - Orquestração de workflows
+- **Python** - Processamento de dados
+- Implementações futuras planejadas:
+  - Minikube para orquestração de containers
+  - Apache Spark para processamento de dados em larga escala
+  - Terraform para infraestrutura como código
+  - MinIO/S3 para armazenamento de objetos
+  - Ferramentas de visualização de dados
 
-Tendo como interesse desenvolver um projeto que abranja o máximo de **hard skills* possíveis para aprendizado, fixação de conhecimentos e - por quê não? - demonstrar aos recrutadores as habilidades adquiridas, buscarei interagir com:
-- [ ] **Docker** para desenvolvimento local
-- [ ] **Minikube** para orquestração de containers
-- [ ] **Airflow** para orquestração de pipeline
-- [ ] **Apache Spark** para processamento de dados
-- [ ] **Terraform** para IaC
-- [ ] **Armazenamento de Objetos** para armazenamento usando Minio (talvez evoluindo para S3)
- - e outros, tais como: Data Catalog, Trino, DataFlow, CDC, ArgoCD, Dagster, CI/CD, AWS.
+## Estrutura do Projeto
 
-Obs 1: Talvez nem todas as stacks possam ser usadas em conjunto ou, ainda, nem este projeto as suporta. Mas deixo registrado como interesse e, quem sabe, criar um novo projeto que suporte aquelas que não foram utilizadas aqui.
-Obs 2: A ideia é deixar o projeto totalmente reproduzível para aqueles que queiram estudar e/ou melhorá-lo.
+```
+.
+├── .devcontainer/         # Configuração do container de desenvolvimento
+│   ├── Dockerfile
+│   ├── devcontainer.json
+│   ├── init-airflow.sh
+│   └── requirements.txt
+├── airflow/              # Configuração do Airflow e DAGs
+│   ├── dags/
+│   └── airflow.cfg
+├── .vscode/             # Configurações do VS Code
+└── README.md
+```
 
-## Sobre a modularização do projeto em *branchs*
+## Pré-requisitos
 
-Haverá a branch principal (*main*) que contemplará o projeto como um todo. Todas as demais *branchs* estarão no escopo da stack de aplicação do projeto. Com isto, busco criar uma leitura do tipo passo a passo e, assim, facilitar o entendimento de quem quer aprender. Em cada branch estarão sendo explicados os passos, as configurações e o desenvolvimento para que a referida etapa aconteça.
+- [Docker](https://docs.docker.com/get-docker/)
+- [VS Code](https://code.visualstudio.com/)
+- [Extensão Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
 
-# Descrição do Projeto
-A [B3][2] é a Bolsa de Valores do Brasil e passei a ter interesse em investimentos em 2022. Quem investe em ações da B3 está investindo em Rendas Variáveis e todo investidor fica sempre de olho no valor da ação e seus possíveis dividendos.
-A B3 disponibiliza para download sempre ao final do dia o [histórico das cotações][3] das ações. Podem ser realizados o download das ações:
+## Como Começar
 
- - Por ano: onde se escolhe o ano
- - Dos últimos 12 meses: onde se escolhe o mês
- - Por data (do ano corrente): onde se escolhe o mês e dia
+1. Clone o repositório:
+```bash
+git clone https://github.com/seuusuario/b3-data-engineering.git
+cd b3-data-engineering
+```
 
-O arquivo virá no formato ZIP e contém um ou mais arquivos TXT com os dados das ações:
+2. Abra o projeto no VS Code:
+```bash
+code .
+```
 
- - nome da empresa
- - código da empresa
- - código da ação
- - código ISIN
- - tipo de mercado (a vista, termo, opções)
- - especificação (ON/PN)
- - preços (anterior, abertura, mínimo, médio, máximo, fechamento)
- - quantidade de negócios e volume negociado com o papel
- - dentre outros dados disponíveis.
+3. Quando solicitado, clique em "Reabrir no Container" ou pressione F1 e selecione "Dev Containers: Reabrir no Container"
 
-O projeto consistirá em realizar o download do histórico, processá-lo e disponibilizar os dados num DW para uma visualização no dashboard.
+4. Aguarde o container ser construído e inicializado. O script de inicialização irá:
+   - Configurar o banco de dados do Airflow
+   - Criar usuário administrador (usuário: admin, senha: admin)
+   - Iniciar o webserver e scheduler do Airflow
+
+5. Acesse a interface do Airflow:
+   - Abra http://localhost:8080 no navegador
+   - Faça login com usuário: admin, senha: admin
+
+## Desenvolvimento
+
+O ambiente de desenvolvimento inclui:
+- Python 3.10 com ambiente virtual
+- Apache Airflow 2.10.5
+- Extensões do VS Code para desenvolvimento Python
+- Webserver e scheduler do Airflow rodando em sessões tmux
+
+### Adicionando Novas DAGs
+
+1. Crie seus arquivos DAG em `airflow/dags`
+2. As DAGs serão automaticamente detectadas pelo Airflow
+3. Visualize e acione-as pela interface do Airflow
+
+### Status do Projeto
+
+Este é um trabalho em andamento. Implementação atual:
+- [x] Configuração do ambiente de desenvolvimento com Docker
+- [x] Configuração básica do Airflow
+- [ ] Extração de dados da B3
+- [ ] Pipeline de processamento de dados
+- [ ] Configuração do data warehouse
+- [ ] Visualização em dashboard
+
+## Contribuindo
+
+Contribuições são bem-vindas! Sinta-se à vontade para enviar um Pull Request.
+
+## Licença
+
+Este projeto está licenciado sob a Apache License 2.0 - consulte o arquivo `LICENSE` para detalhes.
+
+## Autor
+
+[Airton Carneiro](https://www.linkedin.com/in/airton-carneiro) - Engenheiro de Dados com mais de 30 anos de experiência em TI.
+
+## Fonte dos Dados
+
+Os dados históricos das ações são obtidos através do [Histórico B3](https://www.b3.com.br/pt_br/market-data-e-indices/servicos-de-dados/market-data/historico/mercado-a-vista/series-historicas/).
+
+## Branchs do Projeto
+
+O desenvolvimento é realizado em branches separadas para facilitar o aprendizado:
+- `main`: Versão estável e completa do projeto completo
+- `airflow-dev`: Implementação do Apache Airflow
 
 [1]: https://www.linkedin.com/in/airton-carneiro
 [2]: https://www.b3.com.br
