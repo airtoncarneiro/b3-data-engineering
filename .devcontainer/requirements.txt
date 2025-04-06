@@ -1,2 +1,4 @@
 apache-airflow[sqlite]==2.10.5
-httpx
+httpx==0.27.0
+python-dateutil==2.8.2
+typing-extensions==4.10.0
