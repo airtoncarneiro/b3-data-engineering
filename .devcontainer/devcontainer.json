@@ -11,13 +11,13 @@
   "workspaceFolder": "/workspace",
   "mounts": [
     "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
-    "source=${localWorkspaceFolder}/airflow/dags,target=/home/airflow/airflow/dags,type=bind",
-    "source=${localWorkspaceFolder}/airflow/logs,target=/home/airflow/airflow/logs,type=bind"
+    "source=${localWorkspaceFolder}/airflow/dags,target=/home/airflow/dags,type=bind",
+    "source=${localWorkspaceFolder}/airflow/logs,target=/home/airflow/logs,type=bind"
   ],
   "containerEnv": {
     "AIRFLOW__CORE__LOAD_EXAMPLES": "false",
     "AIRFLOW_HOME": "/home/airflow/",
-    "PYTHONPATH": "/workspace:/home/airflow/airflow/dags"
+    "PYTHONPATH": "/workspace:/home/airflow/dags"
   },
   "forwardPorts": [
     8080
