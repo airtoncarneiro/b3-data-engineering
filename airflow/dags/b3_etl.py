@@ -65,24 +65,7 @@ def final_download_and_extract_zip():
     
     return extracted
 
-if __name__ != "__main__":
-    # 🎯 Execução direta no Airflow
-    logging.info("Executando DAG pelo Airflow.")
 
-    dag = final_download_and_extract_zip()
-else:
-    # 🎯 Execução direta no Python
-    logging.info("Executando como script Python puro...")
-
-    downloaded = download_zip_file.function()
-    saved = save_file_to_disk.function(downloaded)
-    extracted = extract_zip_file.function(saved)
-
-    logging.info(f"✅ Extração concluída: {extracted['total_files']} arquivos extraídos.")
-    logging.info(f"📦 Arquivo ZIP: {downloaded['filename']}")
-    logging.info(f"📂 Arquivos extraídos:")
-    
-    for arq in extracted['extracted_files']:
-        logging.info(f" - {arq}")
-
-    logging.info(f"📁 Diretório de extração: {extracted['extract_path']}")
+# 🎯 Execução direta no Airflow
+logging.info("Executando DAG pelo Airflow.")
+dag = final_download_and_extract_zip()

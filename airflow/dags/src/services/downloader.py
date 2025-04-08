@@ -1,5 +1,7 @@
 import httpx
 import src.config.logging_config as log
+from typing import Optional
+
 from src.config.constants import DEFAULT_URL, DEFAULT_TIMEOUT
 # Supondo que o logging já foi configurado em outro lugar. 
 # Remova este import se não houver necessidade de configurar aqui.
@@ -12,11 +14,13 @@ class Downloader:
         self.url = DEFAULT_URL
         self.timeout = DEFAULT_TIMEOUT
 
-    def _download_zip_file(self, url: str = None, timeout: float = None) -> dict:
-        if url:
-            self.url = url
-        if timeout:
-            self.timeout = timeout
+        if not self.url:
+            raise ValueError("A URL não pode ser None.")
+        
+        if self.timeout is None:
+            raise ValueError("O timeout não pode ser None.")
+        
+    def _download_zip_file(self) -> dict:
 
         log.logging.info(f"Iniciando download de: {self.url}")
         try:
