@@ -8,7 +8,7 @@ class ZipExtractor:
         self.extract_path = Path(extract_path)
         self.extract_path.mkdir(parents=True, exist_ok=True)
 
-    def extract_zip_file(self, zip_path: str) -> Dict[str, Any]:
+    def _extract_zip_file(self, zip_path: str) -> Dict[str, Any]:
         try:
             with zipfile.ZipFile(zip_path, 'r') as zip_ref:
                 logging.info(f"Extracting {zip_path} to {self.extract_path}")

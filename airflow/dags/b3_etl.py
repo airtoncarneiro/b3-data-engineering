@@ -27,24 +27,24 @@ default_args = {
 
 # 🚀 Wrappers com @task para o Airflow
 @task
-def _download_zip_file() -> Dict[str, Any]:
+def download_zip_file() -> Dict[str, Any]:
     downloader = Downloader()
-    zip_data = downloader.download_zip_file()
+    zip_data = downloader._download_zip_file()
     return zip_data
 
 @task
-def _save_file_to_disk(file_info: Dict[str, Any]) -> str:
-    saved_path = FileHandler.save_file_to_disk(file_info, save_dir)
+def save_file_to_disk(file_info: Dict[str, Any]) -> str:
+    saved_path = FileHandler._save_file_to_disk(file_info, save_dir)
     return saved_path
 
 @task
-def _extract_zip_file(zip_path: str) -> Dict[str, Any]:
+def extract_zip_file(zip_path: str) -> Dict[str, Any]:
     zip_name = Path(zip_path).stem
     zip_dir = Path(zip_path).parent
     extract_dir = f"{zip_dir}/extracted_txt/{zip_name}"
     
     extractor = ZipExtractor(extract_dir)  # Agora é um diretório válido
-    result = extractor.extract_zip_file(zip_path)
+    result = extractor._extract_zip_file(zip_path)
     return result
 
 # 📅 DAG do Airflow
@@ -59,27 +59,30 @@ def _extract_zip_file(zip_path: str) -> Dict[str, Any]:
 )
 def final_download_and_extract_zip():
     # Define task dependencies
-    downloaded = _download_zip_file()
-    saved = _save_file_to_disk(downloaded) # type: ignore
-    extracted = _extract_zip_file(saved) # type: ignore
+    downloaded = download_zip_file.function()
+    saved = save_file_to_disk.function(downloaded) # type: ignore
+    extracted = extract_zip_file.function(saved) # type: ignore
     
     return extracted
 
 if __name__ != "__main__":
     # 🎯 Execução direta no Airflow
     logging.info("Executando DAG pelo Airflow.")
+
     dag = final_download_and_extract_zip()
 else:
     # 🎯 Execução direta no Python
     logging.info("Executando como script Python puro...")
-    # Execute tasks directly when running as script
-    downloaded = _download_zip_file.function()
-    saved = _save_file_to_disk.function(downloaded)
-    extracted = _extract_zip_file.function(saved)
+
+    downloaded = download_zip_file.function()
+    saved = save_file_to_disk.function(downloaded)
+    extracted = extract_zip_file.function(saved)
+
+    logging.info(f"✅ Extração concluída: {extracted['total_files']} arquivos extraídos.")
+    logging.info(f"📦 Arquivo ZIP: {downloaded['filename']}")
+    logging.info(f"📂 Arquivos extraídos:")
     
-    print(f"✅ Extração concluída: {extracted['total_files']} arquivos extraídos.")
-    print(f"📦 Arquivo ZIP: {downloaded['filename']}")
-    print(f"📂 Arquivos extraídos:")
     for arq in extracted['extracted_files']:
-        print(f" - {arq}")
-    print(f"📁 Diretório de extração: {extracted['extract_path']}")
+        logging.info(f" - {arq}")
+
+    logging.info(f"📁 Diretório de extração: {extracted['extract_path']}")

@@ -12,7 +12,7 @@ class Downloader:
         self.url = DEFAULT_URL
         self.timeout = DEFAULT_TIMEOUT
 
-    def download_zip_file(self, url: str = None, timeout: float = None) -> dict:
+    def _download_zip_file(self, url: str = None, timeout: float = None) -> dict:
         if url:
             self.url = url
         if timeout:

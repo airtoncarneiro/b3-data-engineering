@@ -1,6 +1,6 @@
 class FileHandler:
     @staticmethod
-    def save_file_to_disk(file_info: dict, save_dir: str) -> str:
+    def _save_file_to_disk(file_info: dict, save_dir: str) -> str:
         from pathlib import Path
         import logging
 
