@@ -25,7 +25,7 @@ def log_start():
 def log_end():
     logger = logging.getLogger("airflow.task")
     logger.info(f"FINALIZOU DAG: b3_etl")
-    return extracted
+    return None
 
 @task
 def download_zip_file() -> str:
@@ -60,7 +60,7 @@ def extract_zip_file(zip_path: str) -> Dict[str, Any]:
     start_date=days_ago(1),
     catchup=False,
     tags=["b3", "etl", "v 11"],
-    description="Pipeline híbrido testável como DAG ou script Python (debugável)"
+    description="Pipeline híbrido testável como DAG ou script debugável Python"
 )
 def final_download_and_extract_zip():
     start = log_start()
