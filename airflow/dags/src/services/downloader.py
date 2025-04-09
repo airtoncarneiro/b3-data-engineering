@@ -1,33 +1,27 @@
 import httpx
-import src.config.logging_config as log
+import logging
 from typing import Optional
-
 from src.config.constants import DEFAULT_URL, DEFAULT_TIMEOUT
-# Supondo que o logging já foi configurado em outro lugar. 
-# Remova este import se não houver necessidade de configurar aqui.
-
-# Configuração do logging
-log.logging.basicConfig()
 
 class Downloader:
-    def __init__(self):
+    def __init__(self, logger: Optional[logging.Logger] = None):
+        # Se nenhum logger for fornecido, usa o padrão do Airflow para tasks
+        self.logger = logger or logging.getLogger("airflow.task")
         self.url = DEFAULT_URL
         self.timeout = DEFAULT_TIMEOUT
 
         if not self.url:
-            log.logging.error(msg := "Valor inválido: a URL não pode ser None ou vazia.")
+            self.logger.error(msg := "Valor inválido: a URL não pode ser None ou vazia.")
             raise ValueError(msg)
         
         if not self.timeout:
-            log.logging.error(msg := "Valor inválido: o timeout não pode ser None.")
+            self.logger.error(msg := "Valor inválido: o timeout não pode ser None.")
             raise ValueError(msg)
         
     def _download_zip_file(self) -> dict:
-
-        log.logging.info(f"Iniciando download de: {self.url}")
+        self.logger.info(f"Iniciando download de: {self.url}")
         try:
-            log.logging.warning("⚠️ Verificação SSL desativada para a URL: %s", self.url)
-
+            self.logger.warning("⚠️ Verificação SSL desativada para a URL: %s", self.url)
             with httpx.stream("GET", self.url, timeout=self.timeout, verify=False) as response:
                 response.raise_for_status()
                 content = b''.join(response.iter_bytes())
@@ -39,8 +33,8 @@ class Downloader:
                     "status_code": response.status_code,
                 }
         except httpx.HTTPError as e:
-            log.logging.error(f"Erro HTTP: {e}")
+            self.logger.error(f"Erro HTTP: {e}")
             raise
         except Exception as e:
-            log.logging.error(f"Erro inesperado no download: {e}")
+            self.logger.error(f"Erro inesperado no download: {e}")
             raise
