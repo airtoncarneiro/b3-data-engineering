@@ -11,12 +11,6 @@ from src.services.downloader import Downloader
 from src.services.file_handler import FileHandler
 from src.services.zip_extractor import ZipExtractor
 
-# Define save_dir
-save_dir = os.path.join(os.path.dirname(__file__), "downloads")
-os.makedirs(save_dir, exist_ok=True)
-
-# Configuração do logging
-log.logging.basicConfig()
 
 
 # Configuração de Header e Trailing no logging
@@ -29,6 +23,10 @@ def log_banner(mensagem: str, tipo: str = "info"):
 # 🚀 Wrappers com @task para o Airflow
 @task
 def download_zip_file() -> str:
+    # Define save_dir
+    save_dir = os.path.join(os.path.dirname(__file__), "downloads")
+    os.makedirs(save_dir, exist_ok=True)
+    # Realiza o download do arquivo zip e salva no diretório
     downloader = Downloader()
     zip_data = downloader._download_zip_file()
     saved_path = FileHandler._save_file_to_disk(zip_data, save_dir)
@@ -44,9 +42,6 @@ def extract_zip_file(zip_path: str) -> Dict[str, Any]:
     result = extractor._extract_zip_file(zip_path)
     return result
 
-# Flag para debug com base na variável de ambiente
-DEBUG_MODE = os.environ.get("DEBUG_MODE", "false").lower() == "true"
-
 # 📅 DAG do Airflow
 default_args = {
     "owner": "airflow",
@@ -61,10 +56,11 @@ dag_name = "b3_etl"
     schedule=None,
     start_date=days_ago(1),
     catchup=False,
-    tags=["b3", "etl", "v4"],
+    tags=["b3", "etl", "v6"],
     description="Pipeline híbrido testável como DAG ou script Python (debugável)"
 )
 def final_download_and_extract_zip():
+    log_banner(f"INICIANDO DAG: {dag_name}")
     if DEBUG_MODE:
         # Modo debug: executa as funções diretamente para possibilitar o teste
         downloaded = download_zip_file.function()
@@ -73,8 +69,14 @@ def final_download_and_extract_zip():
         # Modo Airflow: cria as tasks e suas dependências, permitindo a visualização do gráfico
         downloaded = download_zip_file()
         extracted = extract_zip_file(downloaded) # type: ignore
+    
+    log_banner(f"FINALIZOU DAG: {dag_name}")
     return extracted
 
-log_banner(f"INICIANDO DAG: {dag_name}")
+# Configuração do logging
+log.logging.basicConfig()
+
+# Flag para debug com base na variável de ambiente
+DEBUG_MODE = os.environ.get("DEBUG_MODE", "false").lower() == "true"
+
 dag = final_download_and_extract_zip()
-log_banner(f"FINALIZOU DAG: {dag_name}")
