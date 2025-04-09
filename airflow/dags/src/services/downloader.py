@@ -15,10 +15,12 @@ class Downloader:
         self.timeout = DEFAULT_TIMEOUT
 
         if not self.url:
-            raise ValueError("A URL não pode ser None.")
+            log.logging.error(msg := "Valor inválido: a URL não pode ser None ou vazia.")
+            raise ValueError(msg)
         
-        if self.timeout is None:
-            raise ValueError("O timeout não pode ser None.")
+        if not self.timeout:
+            log.logging.error(msg := "Valor inválido: o timeout não pode ser None.")
+            raise ValueError(msg)
         
     def _download_zip_file(self) -> dict:
 

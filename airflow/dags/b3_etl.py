@@ -25,6 +25,12 @@ default_args = {
     "retry_delay": timedelta(minutes=5),
 }
 
+# Configuração de Header e Trailing no logging
+def log_banner(mensagem: str, tipo: str = "info"):
+    borda = "=" * 80
+    msg = f"\n{borda}\n📢 {mensagem}\n{borda}\n"
+    getattr(logging, tipo)(msg)
+
 # 🚀 Wrappers com @task para o Airflow
 @task
 def download_zip_file() -> Dict[str, Any]:
@@ -48,8 +54,9 @@ def extract_zip_file(zip_path: str) -> Dict[str, Any]:
     return result
 
 # 📅 DAG do Airflow
+dag_name = "b3_etl"
 @dag(
-    dag_id="b3_etl",
+    dag_id=dag_name,
     default_args=default_args,
     schedule=None,
     start_date=days_ago(1),
@@ -58,14 +65,13 @@ def extract_zip_file(zip_path: str) -> Dict[str, Any]:
     description="Pipeline híbrido testável como DAG ou script"
 )
 def final_download_and_extract_zip():
-    # Define task dependencies
     downloaded = download_zip_file.function()
     saved = save_file_to_disk.function(downloaded) # type: ignore
     extracted = extract_zip_file.function(saved) # type: ignore
-    
     return extracted
 
 
-# 🎯 Execução direta no Airflow
-logging.info("Executando DAG pelo Airflow.")
+
+log_banner(f"INICIANDO DAG: {dag_name}")
 dag = final_download_and_extract_zip()
+log_banner(f"FINALIZOU DAG: {dag_name}")
