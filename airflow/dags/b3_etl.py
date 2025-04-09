@@ -18,12 +18,6 @@ os.makedirs(save_dir, exist_ok=True)
 # Configuração do logging
 log.logging.basicConfig()
 
-default_args = {
-    "owner": "airflow",
-    "depends_on_past": False,
-    "retries": 2,
-    "retry_delay": timedelta(minutes=5),
-}
 
 # Configuração de Header e Trailing no logging
 def log_banner(mensagem: str, tipo: str = "info"):
@@ -34,14 +28,10 @@ def log_banner(mensagem: str, tipo: str = "info"):
 
 # 🚀 Wrappers com @task para o Airflow
 @task
-def download_zip_file() -> Dict[str, Any]:
+def download_zip_file() -> str:
     downloader = Downloader()
     zip_data = downloader._download_zip_file()
-    return zip_data
-
-@task
-def save_file_to_disk(file_info: Dict[str, Any]) -> str:
-    saved_path = FileHandler._save_file_to_disk(file_info, save_dir)
+    saved_path = FileHandler._save_file_to_disk(zip_data, save_dir)
     return saved_path
 
 @task
@@ -58,6 +48,12 @@ def extract_zip_file(zip_path: str) -> Dict[str, Any]:
 DEBUG_MODE = os.environ.get("DEBUG_MODE", "false").lower() == "true"
 
 # 📅 DAG do Airflow
+default_args = {
+    "owner": "airflow",
+    "depends_on_past": False,
+    "retries": 0,
+    "retry_delay": timedelta(minutes=5),
+}
 dag_name = "b3_etl"
 @dag(
     dag_id=dag_name,
@@ -65,20 +61,18 @@ dag_name = "b3_etl"
     schedule=None,
     start_date=days_ago(1),
     catchup=False,
-    tags=["b3", "etl"],
+    tags=["b3", "etl", "v4"],
     description="Pipeline híbrido testável como DAG ou script Python (debugável)"
 )
 def final_download_and_extract_zip():
     if DEBUG_MODE:
         # Modo debug: executa as funções diretamente para possibilitar o teste
         downloaded = download_zip_file.function()
-        saved = save_file_to_disk.function(downloaded) # type: ignore
-        extracted = extract_zip_file.function(saved) # type: ignore
+        extracted = extract_zip_file.function(downloaded) # type: ignore
     else:
         # Modo Airflow: cria as tasks e suas dependências, permitindo a visualização do gráfico
         downloaded = download_zip_file()
-        saved = save_file_to_disk(downloaded) # type: ignore
-        extracted = extract_zip_file(saved) # type: ignore
+        extracted = extract_zip_file(downloaded) # type: ignore
     return extracted
 
 log_banner(f"INICIANDO DAG: {dag_name}")
