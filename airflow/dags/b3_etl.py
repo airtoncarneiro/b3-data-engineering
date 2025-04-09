@@ -31,6 +31,7 @@ def log_banner(mensagem: str, tipo: str = "info"):
     msg = f"\n{borda}\n📢 {mensagem}\n{borda}\n"
     getattr(logging, tipo)(msg)
 
+
 # 🚀 Wrappers com @task para o Airflow
 @task
 def download_zip_file() -> Dict[str, Any]:
@@ -53,6 +54,9 @@ def extract_zip_file(zip_path: str) -> Dict[str, Any]:
     result = extractor._extract_zip_file(zip_path)
     return result
 
+# Flag para debug com base na variável de ambiente
+DEBUG_MODE = os.environ.get("DEBUG_MODE", "false").lower() == "true"
+
 # 📅 DAG do Airflow
 dag_name = "b3_etl"
 @dag(
@@ -61,16 +65,21 @@ dag_name = "b3_etl"
     schedule=None,
     start_date=days_ago(1),
     catchup=False,
-    tags=["download", "zip", "httpx", "hibrido"],
-    description="Pipeline híbrido testável como DAG ou script"
+    tags=["b3", "etl"],
+    description="Pipeline híbrido testável como DAG ou script Python (debugável)"
 )
 def final_download_and_extract_zip():
-    downloaded = download_zip_file.function()
-    saved = save_file_to_disk.function(downloaded) # type: ignore
-    extracted = extract_zip_file.function(saved) # type: ignore
+    if DEBUG_MODE:
+        # Modo debug: executa as funções diretamente para possibilitar o teste
+        downloaded = download_zip_file.function()
+        saved = save_file_to_disk.function(downloaded) # type: ignore
+        extracted = extract_zip_file.function(saved) # type: ignore
+    else:
+        # Modo Airflow: cria as tasks e suas dependências, permitindo a visualização do gráfico
+        downloaded = download_zip_file()
+        saved = save_file_to_disk(downloaded) # type: ignore
+        extracted = extract_zip_file(saved) # type: ignore
     return extracted
-
-
 
 log_banner(f"INICIANDO DAG: {dag_name}")
 dag = final_download_and_extract_zip()
