@@ -53,4 +53,3 @@ RUN chmod +x /tmp/init-airflow.sh
 
 # Define o usuário padrão
 USER airflow
-
