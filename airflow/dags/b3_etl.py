@@ -6,8 +6,6 @@ from typing import Dict, Any
 from pathlib import Path
 import os
 
-
-
 default_args = {
     "owner": "airflow",
     "depends_on_past": False,
@@ -22,10 +20,10 @@ def log_start():
     return None
 
 @task
-def log_end():
+def log_end(extracted: Dict[str, Any]) -> Dict[str, Any]:
     logger = logging.getLogger("airflow.task")
     logger.info(f"FINALIZOU DAG: b3_etl")
-    return None
+    return extracted
 
 @task
 def download_zip_file() -> str:
@@ -34,9 +32,9 @@ def download_zip_file() -> str:
     logger = logging.getLogger("airflow.task")
     save_dir = os.path.join(os.path.dirname(__file__), "downloads")
     os.makedirs(save_dir, exist_ok=True)
-    downloader = Downloader()
+    downloader = Downloader(logger=logger)
     zip_data = downloader._download_zip_file()
-    saved_path = FileHandler._save_file_to_disk(zip_data, save_dir)
+    saved_path = FileHandler._save_file_to_disk(zip_data, save_dir, logger=logger)
     logger.info(f"Arquivo ZIP baixado e salvo em: {saved_path}")
     return saved_path
 
@@ -48,7 +46,7 @@ def extract_zip_file(zip_path: str) -> Dict[str, Any]:
     zip_dir = Path(zip_path).parent
     extract_dir = f"{zip_dir}/extracted_txt/{zip_name}"
     extractor = ZipExtractor(extract_dir)
-    result = extractor._extract_zip_file(zip_path)
+    result = extractor._extract_zip_file(zip_path, logger=logger)
     logger.info(f"Arquivo ZIP extraído em: {extract_dir}")
     logger.info(f"Arquivos extraídos: {result['extracted_files']}")
     return result
@@ -59,17 +57,18 @@ def extract_zip_file(zip_path: str) -> Dict[str, Any]:
     schedule=None,
     start_date=days_ago(1),
     catchup=False,
-    tags=["b3", "etl", "v 11"],
-    description="Pipeline híbrido testável como DAG ou script debugável Python"
+    tags=["b3", "etl", "v 13"],
+    description="Pipeline híbrido testável como DAG ou script Python (debugável)"
 )
 def final_download_and_extract_zip():
     start = log_start()
     downloaded = download_zip_file()
     extracted = extract_zip_file(downloaded)    # type: ignore
-    end = log_end()    # type: ignore
+    end = log_end(extracted)    # type: ignore
+    
+    _ = start >> downloaded >> extracted >> end
 
-    start >> downloaded >> extracted >> end # type: ignore
-    return end
+    
 
 dag = final_download_and_extract_zip()
 
