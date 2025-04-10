@@ -1,4 +1,6 @@
 from airflow.decorators import dag, task
+from airflow.models.baseoperator import chain
+from airflow.operators.empty import EmptyOperator
 from airflow.utils.dates import days_ago
 from datetime import timedelta
 import logging
@@ -13,17 +15,7 @@ default_args = {
     "retry_delay": timedelta(minutes=5),
 }
 
-@task
-def log_start():
-    logger = logging.getLogger("airflow.task")
-    logger.info(f"INICIANDO DAG: b3_etl")
-    return None
 
-@task
-def log_end(extracted: Dict[str, Any]) -> Dict[str, Any]:
-    logger = logging.getLogger("airflow.task")
-    logger.info(f"FINALIZOU DAG: b3_etl")
-    return extracted
 
 @task
 def download_zip_file() -> str:
@@ -60,18 +52,22 @@ def extract_zip_file(zip_path: str) -> Dict[str, Any]:
     schedule=None,
     start_date=days_ago(1),
     catchup=False,
-    tags=["b3", "etl", "v 14"],
+    tags=["b3", "etl", "v 15"],
     description="Pipeline híbrido testável como DAG ou script Python (debugável)"
 )
 def final_download_and_extract_zip():
-    start = log_start()
     downloaded = download_zip_file()
     extracted = extract_zip_file(downloaded)    # type: ignore
-    end = log_end(extracted)    # type: ignore
-    
-    _ = start >> downloaded >> extracted >> end
+    inicio = EmptyOperator(task_id="inicio")
+    fim = EmptyOperator(task_id="fim")    
+    # _ = start >> downloaded >> extracted >> end
+    chain(
+        inicio,
+        downloaded,
+        extracted,
+        fim
+    )
 
-    
 
 dag = final_download_and_extract_zip()
 
