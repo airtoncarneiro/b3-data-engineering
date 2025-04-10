@@ -1,0 +1,18 @@
+{
+	"name": "Airflow DevContainer",
+	"dockerComposeFile": [
+		"../docker-compose.yaml",
+		"docker-compose.yml"
+	],
+	"service": "airflow-scheduler",
+	"workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+	"runServices": [
+		"airflow-init",
+		"airflow-webserver",
+		"airflow-scheduler",
+		"airflow-worker",
+		"airflow-triggerer"
+	],
+	"postCreateCommand": "docker-compose run --rm airflow-init bash -c 'airflow db init && airflow users create --username admin --firstname Admin --lastname User --role Admin --email admin@airflow.com --password admin && airflow webserver -D && airflow scheduler -D'",
+	"shutdownAction": "none"
+}
