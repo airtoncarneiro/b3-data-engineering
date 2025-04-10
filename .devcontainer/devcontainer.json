@@ -8,6 +8,9 @@
       "GID": "1000"
     }
   },
+  // "service": "airflow",
+  // "forwardPorts": [8080, 5555, 5432, 6379],
+  // "workspaceFolder": "/opt/airflow",
   "workspaceFolder": "/workspace",
   "mounts": [
     "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
@@ -45,5 +48,7 @@
         "ms-azuretools.vscode-docker"
       ]
     }
-  }
+  },
+  "initializeCommand": "cd \"${localWorkspaceFolder}\" && git config --local user.email \"$(git config user.email)\" && git config --local user.name \"$(git config user.name)\"",
+  "overrideCommand": true
 }
