@@ -1,0 +1,58 @@
+services:
+  airflow-webserver:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: airflow-dev
+    command: bash -c "airflow webserver --port 8080"
+    ports:
+      - "8080:8080"
+    volumes:
+      - ../:/workspace
+      - ../airflow/dags:/home/airflow/dags
+      - ../airflow/logs:/home/airflow/logs
+    environment:
+      - AIRFLOW_UID=${AIRFLOW_UID}
+      - PYTHONUNBUFFERED=1
+      - AIRFLOW__CORE__LOAD_EXAMPLES=false
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=sqlite:////tmp/airflow.db
+      - AIRFLOW_HOME=/home/airflow/
+      - PYTHONPATH=/workspace:/home/airflow/dags
+      - SLUGIFY_USES_TEXT_UNIDECODE=yes
+    user: airflow
+    depends_on:
+      - airflow-scheduler
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: "4g"
+        reservations:
+          memory: "2g"
+
+  airflow-scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: airflow-dev
+    command: bash -c "airflow db init && airflow db migrate && airflow scheduler"
+    volumes:
+      - ../:/workspace
+      - ../airflow/dags:/home/airflow/dags
+      - ../airflow/logs:/home/airflow/logs
+    environment:
+      - AIRFLOW_UID=${AIRFLOW_UID}
+      - PYTHONUNBUFFERED=1
+      - AIRFLOW__CORE__LOAD_EXAMPLES=false
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=sqlite:////tmp/airflow.db
+      - AIRFLOW_HOME=/home/airflow/
+      - PYTHONPATH=/workspace:/home/airflow/dags
+      - SLUGIFY_USES_TEXT_UNIDECODE=yes
+    user: airflow
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: "4g"
+        reservations:
+          memory: "2g"
