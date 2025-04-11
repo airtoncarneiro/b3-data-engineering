@@ -108,8 +108,6 @@ services:
     command:
       - -c
       - |
-        mkdir -p /sources/dags /sources/logs /sources/plugins  # Criação dos diretórios
-        chown -R airflow:airflow /sources/dags /sources/logs /sources/plugins  # Ajuste de permissões
         airflow db init  # Inicialização do banco de dados
         airflow users create --username admin --firstname Admin --lastname User --role Admin --email admin@airflow.com --password admin  # Criação do usuário admin
         exec /entrypoint airflow version

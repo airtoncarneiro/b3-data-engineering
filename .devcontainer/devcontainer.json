@@ -1,18 +1,32 @@
 {
 	"name": "Airflow DevContainer",
 	"dockerComposeFile": [
-		"../docker-compose.yaml",
+		"../airflow-docker-compose.yml",
 		"docker-compose.yml"
 	],
+	"remoteUser": "airflow",
 	"service": "airflow-scheduler",
-	"workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+	"workspaceFolder": "/workspaces/b3",
 	"runServices": [
+		"postgres",
 		"airflow-init",
 		"airflow-webserver",
-		"airflow-scheduler",
-		"airflow-worker",
-		"airflow-triggerer"
+		"airflow-scheduler"
 	],
-	"postCreateCommand": "docker-compose run --rm airflow-init bash -c 'airflow db init && airflow users create --username admin --firstname Admin --lastname User --role Admin --email admin@airflow.com --password admin && airflow webserver -D && airflow scheduler -D'",
-	"shutdownAction": "none"
+	"forwardPorts": [
+		8080
+	],
+	"shutdownAction": "stopCompose",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-python.python",
+				"ms-vscode-remote.remote-containers"
+			],
+			"settings": {
+				"terminal.integrated.shell.linux": "/bin/bash"
+			}
+		}
+	},
+	"initializeCommand": "mkdir -p dags logs plugins"
 }
