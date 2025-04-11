@@ -69,15 +69,15 @@ services:
         airflow db init  # Inicializa o banco de dados
         airflow users create --username admin --firstname Admin --lastname User --role Admin --email admin@airflow.com --password admin  # Cria o usuário admin
         exec /entrypoint airflow version
-    environment:
-      AIRFLOW__CORE__EXECUTOR: LocalExecutor
-      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
-    user: "0:0"
     volumes:
       - ${AIRFLOW_PROJ_DIR:-.}:/sources
       - ${AIRFLOW_PROJ_DIR:-.}/dags:/opt/airflow/dags
       - ${AIRFLOW_PROJ_DIR:-.}/logs:/opt/airflow/logs
       - ${AIRFLOW_PROJ_DIR:-.}/plugins:/opt/airflow/plugins
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+    user: "${AIRFLOW_UID:-50000}:0"
 
 volumes:
   postgres-db-volume:

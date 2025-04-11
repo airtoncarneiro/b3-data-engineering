@@ -29,4 +29,7 @@
 		}
 	},
 	"initializeCommand": "mkdir -p dags logs plugins"
+	// "containerEnv": {
+	// 	"AIRFLOW_PROJ_DIR": "/workspaces/b3"
+	// }
 }

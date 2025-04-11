@@ -1,5 +1,5 @@
 services:
   airflow-scheduler:
     volumes:
-      - ..:/workspaces/b3:cached
+      - ..:/workspaces:cached
     # command: /bin/bash -c "chown -R ${AIRFLOW_UID:-1000}:0 /workspaces/b3 && ls -ld /workspaces/b3 && sleep infinity"
