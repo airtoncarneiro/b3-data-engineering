@@ -5,7 +5,6 @@ FROM python:3.10-slim AS python-builder
 RUN apt-get update && apt-get install -y \
     build-essential \
     libsqlite3-dev \
-    default-libmysqlclient-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -26,9 +25,7 @@ FROM python:3.10-slim
 RUN apt-get update && apt-get install -y \
     libsqlite3-dev \
     default-libmysqlclient-dev \
-    curl \
     git \
-    tmux \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
