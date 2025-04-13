@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-export PATH="/opt/venv/bin:/workspace/airflow/.local/bin:${PATH}"
+export PATH="/opt/venv/bin:/workspaces/airflow/.local/bin:${PATH}"
 
 echo "🔧 Iniciando Airflow standalone..." > /tmp/init-airflow.log 2>&1
 
