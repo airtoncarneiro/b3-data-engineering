@@ -4,13 +4,13 @@
 	"service": "airflow",
 	"workspaceFolder": "/workspaces",
 	"mounts": [
-		"source=${localWorkspaceFolder}/airflow/,target=/workspaces,type=bind"
+		"source=${localWorkspaceFolder},target=/workspaces,type=bind"
 	],
 	"forwardPorts": [
 		8080
 	],
 	"remoteUser": "airflow",
-	// "postCreateCommand": "/tmp/init-airflow.sh",
+	"postCreateCommand": "/tmp/init-airflow.sh",
 	"customizations": {
 		"vscode": {
 			"settings": {
