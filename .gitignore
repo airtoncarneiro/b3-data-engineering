@@ -1,0 +1,5 @@
+airflow/.env
+airflow/logs/
+__pycache__/
+# Ignorar pastas do VSCode específicas de ambiente
+.vscode/
