@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-export PATH="/opt/venv/bin:/workspaces/airflow/.local/bin:${PATH}"
+# export PATH="/opt/venv/bin:/workspaces/airflow/.local/bin:${PATH}"
 
 echo "⚙️ Configurando variáveis do Airflow..." 
 
