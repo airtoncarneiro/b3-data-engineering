@@ -10,7 +10,7 @@
 		8080
 	],
 	"remoteUser": "airflow",
-	"postCreateCommand": "/tmp/init-airflow.sh",
+	// "postCreateCommand": "/tmp/init-airflow.sh",
 	"customizations": {
 		"vscode": {
 			"settings": {

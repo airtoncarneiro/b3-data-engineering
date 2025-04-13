@@ -3,36 +3,17 @@ set -e
 
 export PATH="/opt/venv/bin:/workspaces/airflow/.local/bin:${PATH}"
 
-LOG_FILE="/tmp/init-airflow.log"
+echo "⚙️ Configurando variáveis do Airflow..." 
 
-# Limpa o arquivo de log no início
-echo "🔧 Iniciando Airflow standalone..." | tee $LOG_FILE
-
-# Roda o standalone em background
-airflow standalone >> $LOG_FILE 2>&1 &
-
-# Espera o banco inicializar
-sleep 10
-
-echo "🔧 Atualizando senha do usuário admin..." | tee -a $LOG_FILE
-
-airflow users reset-password \
-    --username "$AIRFLOW_ADMIN_USER" \
-    --password "$AIRFLOW_ADMIN_PASSWORD" >> $LOG_FILE 2>&1 || echo "Erro ao atualizar senha do admin" | tee -a $LOG_FILE
-
-echo "⚙️ Configurando variáveis do Airflow..." | tee -a $LOG_FILE
-
+# Cria a variável B3_DOWNLOAD_ALL se não existir
 if ! airflow variables get B3_DOWNLOAD_ALL >/dev/null 2>&1; then
-    airflow variables set B3_DOWNLOAD_ALL "true" >> $LOG_FILE 2>&1 || { echo "Erro ao criar variável B3_DOWNLOAD_ALL" | tee -a $LOG_FILE; exit 1; }
-    echo "✅ Variável B3_DOWNLOAD_ALL criada com valor 'true'!" | tee -a $LOG_FILE
+    airflow variables set B3_DOWNLOAD_ALL "true" || { echo "Erro ao criar variável B3_DOWNLOAD_ALL"; exit 1; }
+    echo "✅ Variável B3_DOWNLOAD_ALL criada com valor 'true'!"
 else
-    echo "👤 Variável B3_DOWNLOAD_ALL já existe!" | tee -a $LOG_FILE
+    echo "👤 Variável B3_DOWNLOAD_ALL já existe!"
 fi
 
-echo "" | tee -a $LOG_FILE
-echo "🔐 Airflow configurado com sucesso!" | tee -a $LOG_FILE
-
-# Exibe informações de acesso
-echo "🔗 Acesse a interface web em: http://localhost:8080" | tee -a $LOG_FILE
-echo "👤 Usuário: $AIRFLOW_ADMIN_USER" | tee -a $LOG_FILE
-echo "🔑 Senha: $AIRFLOW_ADMIN_PASSWORD" | tee -a $LOG_FILE
+echo "🔐 Airflow configurado com sucesso!"
+echo "🔗 Acesse a interface web em: http://localhost:8080"
+echo "👤 Usuário: $AIRFLOW_ADMIN_USER"
+echo "🔑 Senha: $AIRFLOW_ADMIN_PASSWORD"

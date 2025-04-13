@@ -8,6 +8,10 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+# Configura o fuso horário para São Paulo
+ENV TZ=America/Sao_Paulo
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
 # Cria e ativa ambiente virtual 
 RUN python -m venv /opt/venv
 ENV PYTHONUNBUFFERED=1 \
@@ -30,6 +34,11 @@ WORKDIR /workspaces/airflow
 # Copia script de inicialização para /tmp
 COPY init-airflow.sh /tmp/init-airflow.sh
 RUN chmod +x /tmp/init-airflow.sh
+
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh /tmp/init-airflow.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
 
 # RUN mkdir /home/airflow/dags
 # RUN mkdir /workspaces/airflow/dags
