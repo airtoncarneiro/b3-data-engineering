@@ -4,7 +4,7 @@
 	"service": "airflow",
 	"workspaceFolder": "/workspaces/airflow",
 	"mounts": [
-		"source=${localWorkspaceFolder},target=/workspaces,type=bind"
+		"source=${localWorkspaceFolder}/airflow/dags,target=/workspaces/airflow/dags,type=bind"
 	],
 	"forwardPorts": [
 		8080

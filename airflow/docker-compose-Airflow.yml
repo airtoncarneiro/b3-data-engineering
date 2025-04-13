@@ -14,11 +14,11 @@ services:
       - AIRFLOW_ADMIN_PASSWORD=${AIRFLOW_ADMIN_PASSWORD}
       - AIRFLOW__CORE__LOAD_EXAMPLES=${AIRFLOW__CORE__LOAD_EXAMPLES}
     volumes:
-      - .:/workspaces/airflow
+      - ./dags:/workspace/airflow/dags
     ports:
       - "8080:8080"
-    command: /bin/bash -c "/tmp/init-airflow.sh && airflow standalone"
-    # command: tail -f /dev/null
+    # command: /bin/bash -c "/tmp/init-airflow.sh && airflow standalone"
+    command: tail -f /dev/null
 
 volumes:
   postgres_data:

@@ -31,5 +31,8 @@ WORKDIR /workspaces/airflow
 COPY init-airflow.sh /tmp/init-airflow.sh
 RUN chmod +x /tmp/init-airflow.sh
 
+# RUN mkdir /home/airflow/dags
+# RUN mkdir /workspaces/airflow/dags
+
 # Define o usuário padrão
 USER airflow
