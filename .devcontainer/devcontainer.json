@@ -1,0 +1,36 @@
+{
+	"name": "Airflow Dev Container",
+	"dockerComposeFile": "../airflow/docker-compose-Airflow.yml",
+	"service": "airflow",
+	"workspaceFolder": "/workspaces/airflow",
+	"mounts": [
+		"source=${localWorkspaceFolder},target=/workspaces,type=bind"
+	],
+	"forwardPorts": [
+		8080
+	],
+	"remoteUser": "airflow",
+	"remoteEnv": {
+		"PROMPT_COMMAND": "cd /workspaces/airflow || true",
+		"AIRFLOW_ADMIN_USER": "${localEnv:AIRFLOW_ADMIN_USER}",
+		"AIRFLOW_ADMIN_PASSWORD": "${localEnv:AIRFLOW_ADMIN_PASSWORD}",
+		"AIRFLOW_HOME": "${localEnv:AIRFLOW_HOME}",
+		"AIRFLOW__CORE__FERNET_KEY": "${localEnv:AIRFLOW__CORE__FERNET_KEY}"
+	},
+	// "postCreateCommand": "/tmp/init-airflow.sh",
+	"customizations": {
+		"vscode": {
+			"settings": {
+				"python.defaultInterpreterPath": "/opt/venv/bin/python",
+				"terminal.integrated.defaultProfile.linux": "bash",
+				"python.linting.enabled": true,
+				"python.linting.pylintEnabled": true
+			},
+			"extensions": [
+				"ms-python.python",
+				"ms-python.vscode-pylance",
+				"ms-azuretools.vscode-docker"
+			]
+		}
+	}
+}

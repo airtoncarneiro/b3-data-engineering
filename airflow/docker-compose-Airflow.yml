@@ -1,0 +1,24 @@
+services:
+  airflow:
+    build:
+      context: .
+      dockerfile: Dockerfile-Airflow
+    container_name: airflow
+    env_file:
+      - .env
+    environment:
+      - AIRFLOW_UID=${AIRFLOW_UID}
+      - AIRFLOW_HOME=${AIRFLOW_HOME}
+      - AIRFLOW__CORE__FERNET_KEY=${AIRFLOW__CORE__FERNET_KEY}
+      - AIRFLOW_ADMIN_USER=${AIRFLOW_ADMIN_USER}
+      - AIRFLOW_ADMIN_PASSWORD=${AIRFLOW_ADMIN_PASSWORD}
+      - AIRFLOW__CORE__LOAD_EXAMPLES=${AIRFLOW__CORE__LOAD_EXAMPLES}
+    volumes:
+      - .:/workspaces/airflow
+    ports:
+      - "8080:8080"
+    command: /bin/bash -c "/tmp/init-airflow.sh && airflow standalone"
+    # command: tail -f /dev/null
+
+volumes:
+  postgres_data:
