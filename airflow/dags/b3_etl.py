@@ -58,22 +58,24 @@ def extract_zip_file(zip_path: str) -> Dict[str, Any]:
     description="Pipeline híbrido testável como DAG ou script Python (debugável)"
 )
 def final_download_and_extract_zip():
-    series_options = ["serie_diaria", "series_anuais"]
-
-    @task.branch(task_id="if_download_serie")
+    @task.branch(task_id="tipo_serie_choice")
     def download_serie_choice():
+        series_options = ["serie_diaria", "series_anuais"]
         return series_options[0]
     
     inicio = EmptyOperator(task_id="inicio")
     qual_serie_branch = download_serie_choice()
     series_anuais = EmptyOperator(task_id="series_anuais")
     serie_diaria = EmptyOperator(task_id="serie_diaria")
-
     downloaded = download_zip_file()
-    extracted = extract_zip_file(downloaded)    # type: ignore
-    fim = EmptyOperator(task_id="fim")    
-
-    inicio >> qual_serie_branch >> [serie_diaria, series_anuais] >> downloaded >> extracted >> fim  # type: ignore
+    extracted = extract_zip_file(downloaded)
+    fim = EmptyOperator(task_id="fim")
+    
+    # Conectando as tarefas com labels nas edges
+    inicio >> qual_serie_branch
+    qual_serie_branch >> Label("Serie Diária") >> serie_diaria
+    qual_serie_branch >> Label("Series Anuais") >> series_anuais
+    [serie_diaria, series_anuais] >> downloaded >> extracted >> fim
 
 dag = final_download_and_extract_zip()
 
