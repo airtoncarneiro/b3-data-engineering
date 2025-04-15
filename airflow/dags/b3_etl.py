@@ -24,14 +24,14 @@ def download_zip_file() -> str:
     from src.services.file_handler import FileHandler
     from airflow.models import Variable
     logger = logging.getLogger("airflow.task")
-    B3_DOWNLOAD_ALL_SERIES = Variable.get("B3_DOWNLOAD_ALL_SERIES", default_var="false").lower() == "true"
+    B3_DOWNLOAD_SERIE = Variable.get("B3_DOWNLOAD_SERIE", default_var="series_anuais").lower() == "serie_diaria"
     save_dir = os.path.join(os.path.dirname(__file__), "downloads")
     os.makedirs(save_dir, exist_ok=True)
     downloader = Downloader(logger=logger)
     zip_data = downloader._download_zip_file()
     saved_path = FileHandler._save_file_to_disk(zip_data, save_dir, logger=logger)
     logger.info(f"Arquivo ZIP baixado e salvo em: {saved_path}")
-    Variable.set("B3_DOWNLOAD_ALL_SERIES", "false")
+    Variable.set("B3_DOWNLOAD_SERIE", "serie_diaria")
     return saved_path
 
 @task
@@ -47,9 +47,6 @@ def extract_zip_file(zip_path: str) -> Dict[str, Any]:
     logger.info(f"Arquivos extraídos: {result['extracted_files']}")
     return result
 
-@task.branch(task_id="if_download_all_series")
-def qual_serie_choice():
-    return "series_anuais"
 
 @dag(
     dag_id="b3_etl",
@@ -61,8 +58,14 @@ def qual_serie_choice():
     description="Pipeline híbrido testável como DAG ou script Python (debugável)"
 )
 def final_download_and_extract_zip():
+    series_options = ["serie_diaria", "series_anuais"]
+
+    @task.branch(task_id="if_download_serie")
+    def download_serie_choice():
+        return series_options[0]
+    
     inicio = EmptyOperator(task_id="inicio")
-    qual_serie_branch = qual_serie_choice()
+    qual_serie_branch = download_serie_choice()
     series_anuais = EmptyOperator(task_id="series_anuais")
     serie_diaria = EmptyOperator(task_id="serie_diaria")
 
@@ -70,7 +73,7 @@ def final_download_and_extract_zip():
     extracted = extract_zip_file(downloaded)    # type: ignore
     fim = EmptyOperator(task_id="fim")    
 
-    inicio >> qual_serie_branch >> [serie_diaria, series_anuais] >> downloaded >> extracted >> fim
+    inicio >> qual_serie_branch >> [serie_diaria, series_anuais] >> downloaded >> extracted >> fim  # type: ignore
 
 dag = final_download_and_extract_zip()
 
