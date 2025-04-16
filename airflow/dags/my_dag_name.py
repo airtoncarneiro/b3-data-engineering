@@ -34,4 +34,4 @@ with DAG(
 
     task4 = EmptyOperator(task_id="task4")
 
-    task1 >> task2 >> task3 >> task4
+    _ = task1 >> task2 >> task3 >> task4
