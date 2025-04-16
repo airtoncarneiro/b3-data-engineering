@@ -19,16 +19,17 @@ class Downloader:
             self.logger.error(msg := "Valor inválido: o timeout não pode ser None.")
             raise ValueError(msg)
 
-    def _download_zip_file(self) -> Dict[str, Any]:
-        self.logger.info(f"Iniciando download de: {self.url}")
+    def _download_zip_file(self, file_to_download:str) -> Dict[str, Any]:
+        url = self.url + file_to_download
+        self.logger.info(f"Iniciando download de: {url}")
         try:
-            self.logger.warning("⚠️ Verificação SSL desativada para a URL: %s", self.url)
-            with httpx.stream("GET", self.url, timeout=self.timeout, verify=False) as response:
+            self.logger.warning("⚠️ Verificação SSL desativada para a URL: %s", url)
+            with httpx.stream("GET", url, timeout=self.timeout, verify=False) as response:
                 response.raise_for_status()
                 content = b''.join(response.iter_bytes())
                 return {
                     "content": content,
-                    "filename": self.url.split("/")[-1],
+                    "filename": url.split("/")[-1],
                     "content_type": response.headers.get("content-type", ""),
                     "content_length": len(content),
                     "status_code": response.status_code,

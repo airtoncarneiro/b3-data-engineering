@@ -7,8 +7,8 @@ echo "⚙️ Configurando variáveis do Airflow..."
 
 # Cria a variável B3_DOWNLOAD_SERIE se não existir
 if ! airflow variables get B3_DOWNLOAD_SERIE >/dev/null 2>&1; then
-    airflow variables set B3_DOWNLOAD_SERIE "true" || { echo "Erro ao criar variável B3_DOWNLOAD_SERIE"; exit 1; }
-    echo "✅ Variável B3_DOWNLOAD_SERIE criada com valor 'true'!"
+    airflow variables set B3_DOWNLOAD_SERIE "series_anuais" || { echo "Erro ao criar variável B3_DOWNLOAD_SERIE"; exit 1; }
+    echo "✅ Variável B3_DOWNLOAD_SERIE criada com valor 'series_anuais'!"
 else
     echo "👤 Variável B3_DOWNLOAD_SERIE já existe!"
 fi
