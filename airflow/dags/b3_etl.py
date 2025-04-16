@@ -41,12 +41,32 @@ def extract_zip_files(zip_paths: List[str]) -> None:
         logger.info(f"Arquivo ZIP extraído: {result['extracted_files']}")
 
 @task
-def serie_diaria() -> List[str]:
-    return ['COTAHIST_D01042025.ZIP']
+def serie_diaria(**context) -> List[str]:
+    # return ['COTAHIST_D01042025.ZIP']
+    execution_date = context["execution_date"]
+    dia_anterior = execution_date - timedelta(days=1)
+    nome_arquivo = dia_anterior.strftime("COTAHIST_D%d%m%Y.ZIP")
+    return [nome_arquivo]
 
 @task
-def series_anuais() -> List[str]:
-    return ['COTAHIST_A2024.ZIP', 'COTAHIST_A2025.ZIP']
+def series_anuais(**context) -> List[str]:
+    from airflow.models import Variable
+    # from datetime import datetime
+
+    execution_date = context["execution_date"]
+    ano_execucao = execution_date.year
+
+    try:
+        # Tenta buscar a variável (sem valor padrão)
+        ano_inicial_str = Variable.get("B3_CONFIG_DOWNLOAD_SERIE_ANUAL_DESDE_DE")
+        ano_inicial = int(ano_inicial_str)
+    except KeyError:
+        # Se não existir, usa o ano da execução
+        ano_inicial = ano_execucao
+
+    # Gera os nomes dos arquivos entre ano_inicial e ano_execucao
+    arquivos = [f"COTAHIST_A{ano}.ZIP" for ano in range(ano_inicial, ano_execucao + 1)]
+    return arquivos
 
 @dag(
     dag_id="b3_etl",
@@ -54,17 +74,28 @@ def series_anuais() -> List[str]:
     schedule=None,
     start_date=days_ago(1),
     catchup=False,
+    description=(
+        "DAG para download de séries da B3.\n"
+        "Variáveis esperadas:\n"
+        "- B3_CONFIG_DOWNLOAD_SERIE: tipo de série a ser baixada (padrão: series_anuais)\n"
+        "- B3_SERIE_ANUAL_DESDE_DE: ano inicial para as séries anuais\n"
+        "\n"
+        "Exemplo: Se B3_SERIE_ANUAL_DESDE_DE for '2023' e a DAG executar em 2025, "
+        "os arquivos COTAHIST_A2023.ZIP, COTAHIST_A2024.ZIP e COTAHIST_A2025.ZIP serão processados."
+    ),
     tags=["b3", "etl"],
 )
 def b3_etl():
     @task.branch(task_id="tipo_serie")
     def tipo_serie_choice():
         from airflow.models import Variable
-        b3_download_serie = Variable.get("B3_DOWNLOAD_SERIE", default_var="series_anuais").lower()
-        if b3_download_serie == "serie_diaria":
-            return "grupo_diario.download_diario"
-        else:
-            return "grupo_anual.download_anual"
+        B3_CONFIG_DOWNLOAD_SERIE = Variable.get("B3_CONFIG_DOWNLOAD_SERIE", default_var="series_anuais").lower()
+        # if B3_CONFIG_DOWNLOAD_SERIE == "serie_diaria":
+        #     return "grupo_diario.download_diario"
+        # else:
+        #     return "grupo_anual.download_anual"        
+        return "grupo_diario.download_diario" if B3_CONFIG_DOWNLOAD_SERIE == "serie_diaria" else "grupo_anual.download_anual"
+
 
     # Nós de controle
     inicio = EmptyOperator(task_id="inicio")
