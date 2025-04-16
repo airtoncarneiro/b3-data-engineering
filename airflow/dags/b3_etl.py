@@ -73,17 +73,21 @@ def b3_etl():
     tipo_serie = tipo_serie_choice()
 
     # Grupo para série diária
-    with TaskGroup(group_id="grupo_diario") as grupo_diario:
+    with TaskGroup(group_id="grupo_serie_diaria") as grupo_diario:
         arquivos_diarios = serie_diaria.override(task_id="download_diario")()
-        with TaskGroup(group_id="downloads_diarios") as downloads_diarios:
-            downloads_dia = download_zip_file.expand(file_to_download=arquivos_diarios)
+        # with TaskGroup(group_id="download_serie_diaria") as downloads_diarios:
+        #     downloads_dia = download_zip_file.expand(file_to_download=arquivos_diarios)
+        # extrair_dia = extract_zip_files(downloads_dia)
+        # arquivos_diarios >> downloads_diarios >> extrair_dia
+
+        downloads_dia = download_zip_file.expand(file_to_download=arquivos_diarios)
         extrair_dia = extract_zip_files(downloads_dia)
-        arquivos_diarios >> downloads_diarios >> extrair_dia
+        arquivos_diarios >> downloads_dia >> extrair_dia        
 
     # Grupo para séries anuais
-    with TaskGroup(group_id="grupo_anual") as grupo_anual:
+    with TaskGroup(group_id="grupo_series_anuais") as grupo_anual:
         arquivos_anuais = series_anuais.override(task_id="download_anual")()
-        with TaskGroup(group_id="downloads_anuais") as downloads_anuais:
+        with TaskGroup(group_id="download_series_anuais") as downloads_anuais:
             downloads_ano = download_zip_file.expand(file_to_download=arquivos_anuais)
         extrair_ano = extract_zip_files(downloads_ano)
         arquivos_anuais >> downloads_anuais >> extrair_ano
@@ -94,6 +98,3 @@ def b3_etl():
     tipo_serie >> grupo_anual >> fim
 
 dag = b3_etl()
-
-if __name__ == "__main__":
-    dag.test()
