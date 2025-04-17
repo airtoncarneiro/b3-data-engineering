@@ -2,6 +2,8 @@ from airflow.decorators import dag, task
 from airflow.operators.empty import EmptyOperator
 from airflow.utils.task_group import TaskGroup
 from airflow.utils.dates import days_ago
+from airflow.utils.trigger_rule import TriggerRule
+from airflow.models import Variable
 from datetime import timedelta
 from typing import List
 from pathlib import Path
@@ -50,7 +52,7 @@ def serie_diaria(**context) -> List[str]:
 
 @task
 def series_anuais(**context) -> List[str]:
-    from airflow.models import Variable
+    # from airflow.models import Variable
     # from datetime import datetime
 
     execution_date = context["execution_date"]
@@ -78,6 +80,7 @@ def series_anuais(**context) -> List[str]:
         "DAG para download de séries da B3.\n"
         "Variáveis esperadas:\n"
         "- B3_CONFIG_DOWNLOAD_SERIE: tipo de série a ser baixada (padrão: series_anuais)\n"
+        "                            após a primeira execução, o valor será serie_diaria\n"
         "- B3_SERIE_ANUAL_DESDE_DE: ano inicial para as séries anuais\n"
         "\n"
         "Exemplo: Se B3_SERIE_ANUAL_DESDE_DE for '2023' e a DAG executar em 2025, "
@@ -88,14 +91,13 @@ def series_anuais(**context) -> List[str]:
 def b3_etl():
     @task.branch(task_id="tipo_serie")
     def tipo_serie_choice():
-        from airflow.models import Variable
+        # from airflow.models import Variable
         B3_CONFIG_DOWNLOAD_SERIE = Variable.get("B3_CONFIG_DOWNLOAD_SERIE", default_var="series_anuais").lower()
         # if B3_CONFIG_DOWNLOAD_SERIE == "serie_diaria":
         #     return "grupo_diario.download_diario"
         # else:
         #     return "grupo_anual.download_anual"        
-        return "grupo_diario.download_diario" if B3_CONFIG_DOWNLOAD_SERIE == "serie_diaria" else "grupo_anual.download_anual"
-
+        return "grupo_serie_diaria.download_diario" if B3_CONFIG_DOWNLOAD_SERIE == "serie_diaria" else "grupo_series_anuais.download_anual"
 
     # Nós de controle
     inicio = EmptyOperator(task_id="inicio")
@@ -113,19 +115,29 @@ def b3_etl():
 
         downloads_dia = download_zip_file.expand(file_to_download=arquivos_diarios)
         extrair_dia = extract_zip_files(downloads_dia)
-        arquivos_diarios >> downloads_dia >> extrair_dia        
+        arquivos_diarios >> downloads_dia >> extrair_dia
 
     # Grupo para séries anuais
     with TaskGroup(group_id="grupo_series_anuais") as grupo_anual:
         arquivos_anuais = series_anuais.override(task_id="download_anual")()
-        with TaskGroup(group_id="download_series_anuais") as downloads_anuais:
-            downloads_ano = download_zip_file.expand(file_to_download=arquivos_anuais)
+        # with TaskGroup(group_id="download_series_anuais") as downloads_anuais:
+        downloads_ano = download_zip_file.expand(file_to_download=arquivos_anuais)
         extrair_ano = extract_zip_files(downloads_ano)
-        arquivos_anuais >> downloads_anuais >> extrair_ano
+        arquivos_anuais >> downloads_ano >> extrair_ano
 
     # Conexões
+    # inicio >> tipo_serie
+    # tipo_serie >> grupo_diario >> fim
+    # tipo_serie >> grupo_anual >> fim
+
+    merge = EmptyOperator(
+    task_id="merge_paths",
+    trigger_rule=TriggerRule.NONE_FAILED_MIN_ONE_SUCCESS,
+)
     inicio >> tipo_serie
-    tipo_serie >> grupo_diario >> fim
-    tipo_serie >> grupo_anual >> fim
+    tipo_serie >> grupo_diario >> merge
+    tipo_serie >> grupo_anual >> merge
+    merge >> fim
+
 
 dag = b3_etl()
