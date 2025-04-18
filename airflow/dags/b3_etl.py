@@ -5,22 +5,16 @@ from airflow.utils.dates import days_ago
 from airflow.utils.trigger_rule import TriggerRule
 from airflow.models import Variable
 from datetime import timedelta
+import pendulum
 from typing import List
 from pathlib import Path
 import os
 import logging
 
-default_args = {
-    "owner": "airflow",
-    "depends_on_past": False,
-    "retries": 0,
-    "retry_delay": timedelta(minutes=1),
-}
 
 @task
 def download_zip_file(file_to_download: str) -> str:
-    from src.services.downloader import Downloader
-    from src.services.file_handler import FileHandler
+    from src.services import Downloader, FileHandler
     logger = logging.getLogger("airflow.task")
     save_dir = os.path.join(os.path.dirname(__file__), "downloads")
     downloader = Downloader(logger=logger)
@@ -30,16 +24,25 @@ def download_zip_file(file_to_download: str) -> str:
     return saved_path
 
 @task
-def extract_zip_files(zip_paths: List[str]) -> None:
-    from src.services.zip_extractor import ZipExtractor
+def extract_zip_files(zip_paths: str) -> None:
+# def extract_zip_files(zip_paths: List[str]) -> None:
+    from src.services import ZipExtractor
     logger = logging.getLogger("airflow.task")
-    for zip_path in zip_paths:
-        zip_name = Path(zip_path).stem
-        zip_dir = Path(zip_path).parent
-        extract_dir = f"{zip_dir}/extracted_txt/{zip_name}"
-        extractor = ZipExtractor(extract_dir)
-        result = extractor._extract_zip_file(zip_path, logger=logger)
-        logger.info(f"Arquivo ZIP extraído: {result['extracted_files']}")
+    # for zip_path in zip_paths:
+    #     zip_name = Path(zip_path).stem
+    #     zip_dir = Path(zip_path).parent
+    #     extract_dir = f"{zip_dir}/extracted_txt/{zip_name}"
+    #     extractor = ZipExtractor(extract_dir)
+    #     result = extractor._extract_zip_file(zip_path, logger=logger)
+    #     logger.info(f"Arquivo ZIP extraído: {result['extracted_files']}")
+    zip_path = zip_paths
+    zip_name = Path(zip_path).stem
+    zip_dir = Path(zip_path).parent
+    extract_dir = f"{zip_dir}/extracted_txt/{zip_name}"
+    extractor = ZipExtractor(extract_dir)
+    result = extractor._extract_zip_file(zip_path, logger=logger)
+    logger.info(f"Arquivo ZIP extraído: {result['extracted_files']}")
+    return result["extracted_files"]
 
 @task
 def serie_diaria(**context) -> List[str]:
@@ -62,11 +65,17 @@ def series_anuais(**context) -> List[str]:
     arquivos = [f"COTAHIST_A{ano}.ZIP" for ano in range(ano_inicial, ano_execucao + 1)]
     return arquivos
 
+default_args = {
+    "owner": "airflow",
+    "depends_on_past": False,
+    "retries": 0,
+    "retry_delay": timedelta(minutes=1),
+}
 @dag(
     dag_id="b3_etl",
     default_args=default_args,
     schedule=None,
-    start_date=days_ago(1),
+    start_date=pendulum.today('UTC').add(days=-1),
     catchup=False,
     description=(
         "DAG para download de séries da B3.\n"
@@ -78,7 +87,7 @@ def series_anuais(**context) -> List[str]:
         "Exemplo: Se B3_SERIE_ANUAL_DESDE_DE for '2023' e a DAG executar em 2025, "
         "os arquivos COTAHIST_A2023.ZIP, COTAHIST_A2024.ZIP e COTAHIST_A2025.ZIP serão processados."
     ),
-    tags=["b3", "etl"],
+    tags=["b3", "etl", "v 1"],
 )
 def b3_etl():
     @task.branch(task_id="tipo_serie")
@@ -118,3 +127,6 @@ def b3_etl():
 
 
 dag = b3_etl()
+
+if __name__ == "__main__":
+    dag.test()

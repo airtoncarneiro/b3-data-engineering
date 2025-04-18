@@ -2,8 +2,8 @@ import httpx
 import logging
 from typing import Optional
 from typing import Dict, Any
-from src.config.constants import DEFAULT_URL, DEFAULT_TIMEOUT
-from ..utils.error_handlers import raise_http_error, raise_unexpected_error
+from src.config import DEFAULT_URL, DEFAULT_TIMEOUT
+from src.utils  import raise_http_error, raise_unexpected_error
 
 class Downloader:
     def __init__(self, logger: Optional[logging.Logger] = None):
