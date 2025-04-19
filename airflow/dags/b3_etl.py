@@ -3,9 +3,10 @@ from airflow.operators.empty import EmptyOperator
 from airflow.utils.task_group import TaskGroup
 from airflow.utils.trigger_rule import TriggerRule
 from airflow.models import Variable
+from airflow.models.xcom_arg import XComArg
 from datetime import timedelta
 import pendulum
-from typing import List, Optional
+from typing import List, Optional, Union
 from pathlib import Path
 import os
 import logging
@@ -40,8 +41,8 @@ def extract_zip_files(zip_paths: str) -> List[str]:
 def serie_diaria(**context) -> List[str]:
     execution_date = context["execution_date"]
     dia_anterior = execution_date - timedelta(days=1)
-    nome_arquivo = dia_anterior.strftime("COTAHIST_D%d%m%Y.ZIP")
-    return [nome_arquivo]
+    nomes_arquivos = [dia_anterior.strftime("COTAHIST_D%d%m%Y.ZIP")]
+    return nomes_arquivos
 
 
 @task
@@ -53,15 +54,22 @@ def series_anuais(**context) -> List[str]:
         ano_inicial = int(ano_inicial_str)
     except KeyError:
         ano_inicial = ano_execucao
-    return [f"COTAHIST_A{ano}.ZIP" for ano in range(ano_inicial, ano_execucao + 1)]
+    nomes_arquivos = [f"COTAHIST_A{ano}.ZIP" for ano in range(ano_inicial, ano_execucao + 1)]
+    return nomes_arquivos
 
 
 @task(trigger_rule=TriggerRule.NONE_FAILED_MIN_ONE_SUCCESS)
 def merge_list(
-    lista_diaria: Optional[List[str]] = None,
-    lista_anual: Optional[List[str]] = None,
-) -> List[str]:
+    lista_diaria: Union[List[str], XComArg, None] = None,
+    lista_anual: Union[List[str], XComArg, None] = None,
+) -> Union[List[str], XComArg]:
     return lista_diaria or lista_anual or []
+
+
+@task.branch(task_id="tipo_serie")
+def tipo_serie_choice() -> str:
+    cfg = Variable.get("B3_CONFIG_DOWNLOAD_SERIE", default_var="series_anuais").lower()
+    return "if_tipo_serie_then.download_diario" if cfg == "serie_diaria" else "if_tipo_serie_then.download_anual"
 
 
 default_args = {
@@ -83,32 +91,29 @@ default_args = {
         "- B3_CONFIG_DOWNLOAD_SERIE: tipo de série a ser baixada (padrão: series_anuais)\n"
         "- B3_CONFIG_DOWNLOAD_SERIE_ANUAL_DESDE_DE: ano inicial para séries anuais\n"
     ),
-    tags=["b3", "etl", "v3"],
+    tags=["b3", "etl", "v12"],
 )
 def b3_etl():
-    @task.branch(task_id="tipo_serie")
-    def tipo_serie_choice() -> str:
-        cfg = Variable.get("B3_CONFIG_DOWNLOAD_SERIE", default_var="series_anuais").lower()
-        return "grupo_diario.download_diario" if cfg == "serie_diaria" else "grupo_anual.download_anual"
 
     inicio = EmptyOperator(task_id="inicio")
     fim = EmptyOperator(task_id="fim")
     tipo_serie = tipo_serie_choice()
 
-    with TaskGroup(group_id="grupo_diario") as grupo_diario:
-        arquivos_diarios = serie_diaria.override(task_id="download_diario")()
 
-    with TaskGroup(group_id="grupo_anual") as grupo_anual:
+    with TaskGroup(group_id="if_tipo_serie_then") as if_tipo_serie_then:
+        arquivos_diarios = serie_diaria.override(task_id="download_diario")()
         arquivos_anuais = series_anuais.override(task_id="download_anual")()
-    
-    lista_final = merge_list(arquivos_diarios, arquivos_anuais) # type: ignore
+
+    lista_final = merge_list(
+        lista_diaria=arquivos_diarios,
+        lista_anual=arquivos_anuais
+    )
+
     downloads = download_zip_file.expand(file_to_download=lista_final)
     extracoes = extract_zip_files.expand(zip_paths=downloads)
 
-    inicio >> tipo_serie # type: ignore
-    tipo_serie >> grupo_diario # type: ignore
-    tipo_serie >> grupo_anual # type: ignore
-    lista_final >> downloads >> extracoes >> fim # type: ignore
+    _ = inicio >> tipo_serie >> if_tipo_serie_then >> lista_final >> downloads >> extracoes >> fim
+
 
 
 dag = b3_etl()
