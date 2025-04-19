@@ -10,6 +10,8 @@ from typing import List, Optional, Union
 from pathlib import Path
 import os
 import logging
+import httpx
+
 
 @task
 def download_zip_file(file_to_download: str) -> str:
@@ -66,6 +68,26 @@ def merge_list(
     return lista_diaria or lista_anual or []
 
 
+@task
+def verifica_disponibilidade(arquivos: List[str]) -> List[str]:
+    base_url = "https://bvmf.bmfbovespa.com.br/InstDados/SerHist/"
+    disponiveis = []
+    for nome in arquivos:
+        url = f"{base_url}{nome}"
+        try:
+            resp = httpx.head(url, timeout=5)
+            if resp.status_code == 200:
+                disponiveis.append(nome)
+        except httpx.HTTPError:
+            continue
+    return disponiveis
+
+
+@task.branch
+def decide_se_continua(lista: List[str]) -> str:
+    return "downloads" if lista else "fim"
+
+
 @task.branch(task_id="tipo_serie")
 def tipo_serie_choice() -> str:
     cfg = Variable.get("B3_CONFIG_DOWNLOAD_SERIE", default_var="series_anuais").lower()
@@ -79,6 +101,7 @@ default_args = {
     "retry_delay": timedelta(minutes=1),
 }
 
+
 @dag(
     dag_id="b3_etl",
     default_args=default_args,
@@ -91,14 +114,16 @@ default_args = {
         "- B3_CONFIG_DOWNLOAD_SERIE: tipo de série a ser baixada (padrão: series_anuais)\n"
         "- B3_CONFIG_DOWNLOAD_SERIE_ANUAL_DESDE_DE: ano inicial para séries anuais\n"
     ),
-    tags=["b3", "etl", "v12"],
+    tags=["b3", "etl", "v16"],
 )
 def b3_etl():
-
     inicio = EmptyOperator(task_id="inicio")
-    fim = EmptyOperator(task_id="fim")
-    tipo_serie = tipo_serie_choice()
+    fim = EmptyOperator(
+        task_id="fim",
+        trigger_rule=TriggerRule.NONE_FAILED_MIN_ONE_SUCCESS
+    )
 
+    tipo_serie = tipo_serie_choice()
 
     with TaskGroup(group_id="if_tipo_serie_then") as if_tipo_serie_then:
         arquivos_diarios = serie_diaria.override(task_id="download_diario")()
@@ -106,14 +131,19 @@ def b3_etl():
 
     lista_final = merge_list(
         lista_diaria=arquivos_diarios,
-        lista_anual=arquivos_anuais
+        lista_anual=arquivos_anuais,
     )
 
-    downloads = download_zip_file.expand(file_to_download=lista_final)
+    arquivos_existentes = verifica_disponibilidade(lista_final) # type: ignore
+    escolha = decide_se_continua(arquivos_existentes) # type: ignore
+
+    downloads = download_zip_file.expand(file_to_download=arquivos_existentes)
     extracoes = extract_zip_files.expand(zip_paths=downloads)
 
-    _ = inicio >> tipo_serie >> if_tipo_serie_then >> lista_final >> downloads >> extracoes >> fim
-
+    # Encadeamento explícito com >>
+    inicio >> tipo_serie >> if_tipo_serie_then >> lista_final >> arquivos_existentes >> escolha # type: ignore
+    escolha >> downloads >> extracoes # type: ignore
+    [extracoes, escolha] >> fim # type: ignore
 
 
 dag = b3_etl()
