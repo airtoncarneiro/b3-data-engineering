@@ -101,12 +101,6 @@ Acesse a interface web do Airflow:
 | AIRFLOW__CORE__DEFAULT_TIMEZONE | Fuso horário |
 | AIRFLOW__DEBUG__FAIL_FAST | Modo "fail fast" |
 
-Para gerar uma nova FERNET_KEY:
-
-```bash
-python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
-```
-
 ## 📦 Dependências Python
 
 Principais pacotes no `requirements.txt`:
@@ -126,3 +120,4 @@ Este ambiente é ideal para:
 - Estudos sobre Apache Airflow
 - Execução local e testes isolados
 - Ambiente seguro, parametrizado e replicável
+- Pode abrir a DAG e debugar. Basta inserir os Breakpoints na Task que quer debugar

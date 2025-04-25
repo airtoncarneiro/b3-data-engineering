@@ -1,7 +1,7 @@
 from pathlib import Path
 import logging
 from typing import Optional
-from ..utils.error_handlers import raise_io_error, raise_unexpected_error
+from src.utils  import raise_io_error, raise_unexpected_error
 
 class FileHandler:
     @staticmethod

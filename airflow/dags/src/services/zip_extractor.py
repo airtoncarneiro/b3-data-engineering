@@ -2,7 +2,7 @@ import zipfile
 from typing import Dict, Any, Optional
 from pathlib import Path
 import logging
-from ..utils.error_handlers import raise_bad_zip_error, raise_unexpected_error
+from src.utils  import raise_bad_zip_error, raise_unexpected_error
 
 class ZipExtractor:
     def __init__(self, extract_path: str):
