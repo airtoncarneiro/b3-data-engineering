@@ -1,21 +1,19 @@
 from airflow.decorators import dag, task
-from airflow.operators.empty import EmptyOperator
-from airflow.utils.task_group import TaskGroup
+# from airflow.operators.empty import EmptyOperator
+# from airflow.utils.task_group import TaskGroup
 from airflow.utils.trigger_rule import TriggerRule
-from airflow.models import Variable
 from airflow.models.xcom_arg import XComArg
+from typing import List, Union
 from datetime import timedelta
 import pendulum
-from typing import List, Optional, Union
-from pathlib import Path
-import os
-import logging
-import httpx
 
 
 @task
 def download_zip_file(file_to_download: str) -> str:
+    import os
+    import logging
     from src.services import Downloader, FileHandler
+
     logger = logging.getLogger("airflow.task")
     save_dir = os.path.join(os.path.dirname(__file__), "downloads")
     downloader = Downloader(logger=logger)
@@ -27,7 +25,10 @@ def download_zip_file(file_to_download: str) -> str:
 
 @task
 def extract_zip_files(zip_paths: str) -> List[str]:
+    import logging
+    from pathlib import Path
     from src.services import ZipExtractor
+
     logger = logging.getLogger("airflow.task")
     zip_path = zip_paths
     zip_name = Path(zip_path).stem
@@ -41,6 +42,8 @@ def extract_zip_files(zip_paths: str) -> List[str]:
 
 @task
 def serie_diaria(**context) -> List[str]:
+    from datetime import timedelta
+
     execution_date = context["execution_date"]
     dia_anterior = execution_date - timedelta(days=1)
     nomes_arquivos = [dia_anterior.strftime("COTAHIST_D%d%m%Y.ZIP")]
@@ -49,6 +52,9 @@ def serie_diaria(**context) -> List[str]:
 
 @task
 def series_anuais(**context) -> List[str]:
+    from datetime import timedelta
+    from airflow.models import Variable
+
     execution_date = context["execution_date"]
     ano_execucao = execution_date.year
     try:
@@ -69,27 +75,32 @@ def merge_list(
 
 
 @task
-def verifica_disponibilidade(arquivos: List[str]) -> List[str]:
+def verifica_disponibilidade(arquivos: Union[List[str], XComArg]) -> List[str]:
+    import httpx
+
     base_url = "https://bvmf.bmfbovespa.com.br/InstDados/SerHist/"
     disponiveis = []
     for nome in arquivos:
         url = f"{base_url}{nome}"
         try:
-            resp = httpx.head(url, timeout=5)
+            resp = httpx.head(url, timeout=20, verify=False)
             if resp.status_code == 200:
                 disponiveis.append(nome)
-        except httpx.HTTPError:
+        except httpx.HTTPError as e:
+            print(f"Erro ao acessar {url}: {e}")
             continue
     return disponiveis
 
 
 @task.branch
-def decide_se_continua(lista: List[str]) -> str:
-    return "downloads" if lista else "fim"
+def decide_se_continua(lista: Union[List[str], XComArg]) -> str:
+    result = "downloads" if lista else "fim"
+    return result
 
 
 @task.branch(task_id="tipo_serie")
 def tipo_serie_choice() -> str:
+    from airflow.models import Variable
     cfg = Variable.get("B3_CONFIG_DOWNLOAD_SERIE", default_var="series_anuais").lower()
     return "if_tipo_serie_then.download_diario" if cfg == "serie_diaria" else "if_tipo_serie_then.download_anual"
 
@@ -114,9 +125,12 @@ default_args = {
         "- B3_CONFIG_DOWNLOAD_SERIE: tipo de série a ser baixada (padrão: series_anuais)\n"
         "- B3_CONFIG_DOWNLOAD_SERIE_ANUAL_DESDE_DE: ano inicial para séries anuais\n"
     ),
-    tags=["b3", "etl", "v16"],
+    tags=["b3", "etl", "v20"],
 )
 def b3_etl():
+    from airflow.operators.empty import EmptyOperator
+    from airflow.utils.task_group import TaskGroup
+
     inicio = EmptyOperator(task_id="inicio")
     fim = EmptyOperator(
         task_id="fim",
@@ -134,16 +148,15 @@ def b3_etl():
         lista_anual=arquivos_anuais,
     )
 
-    arquivos_existentes = verifica_disponibilidade(lista_final) # type: ignore
-    escolha = decide_se_continua(arquivos_existentes) # type: ignore
+    arquivos_existentes = verifica_disponibilidade(lista_final)
+    escolha = decide_se_continua(arquivos_existentes)
 
     downloads = download_zip_file.expand(file_to_download=arquivos_existentes)
     extracoes = extract_zip_files.expand(zip_paths=downloads)
 
-    # Encadeamento explícito com >>
-    inicio >> tipo_serie >> if_tipo_serie_then >> lista_final >> arquivos_existentes >> escolha # type: ignore
-    escolha >> downloads >> extracoes # type: ignore
-    [extracoes, escolha] >> fim # type: ignore
+    inicio >> tipo_serie >> if_tipo_serie_then >> lista_final >> arquivos_existentes >> escolha
+    escolha >> downloads >> extracoes
+    [extracoes, escolha] >> fim
 
 
 dag = b3_etl()
