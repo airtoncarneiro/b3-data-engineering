@@ -101,8 +101,14 @@ def decide_se_continua(lista: Union[List[str], XComArg]) -> str:
 @task.branch(task_id="tipo_serie")
 def tipo_serie_choice() -> str:
     from airflow.models import Variable
-    cfg = Variable.get("B3_CONFIG_DOWNLOAD_SERIE", default_var="series_anuais").lower()
-    return "if_tipo_serie_then.download_diario" if cfg == "serie_diaria" else "if_tipo_serie_then.download_anual"
+    serie = Variable.get("B3_CONFIG_DOWNLOAD_SERIE", default_var="series_anuais").lower()
+    return "if_tipo_serie_then.download_diario" if serie == "serie_diaria" else "if_tipo_serie_then.download_anual"
+
+
+@task
+def seta_serie_para_diaria() -> None:
+    from airflow.models import Variable
+    Variable.set("B3_CONFIG_DOWNLOAD_SERIE", "serie_diaria")
 
 
 default_args = {
@@ -125,7 +131,7 @@ default_args = {
         "- B3_CONFIG_DOWNLOAD_SERIE: tipo de série a ser baixada (padrão: series_anuais)\n"
         "- B3_CONFIG_DOWNLOAD_SERIE_ANUAL_DESDE_DE: ano inicial para séries anuais\n"
     ),
-    tags=["b3", "etl", "v20"],
+    tags=["b3", "etl", "v22"],
 )
 def b3_etl():
     from airflow.operators.empty import EmptyOperator
@@ -151,12 +157,17 @@ def b3_etl():
     arquivos_existentes = verifica_disponibilidade(lista_final)
     escolha = decide_se_continua(arquivos_existentes)
 
-    downloads = download_zip_file.expand(file_to_download=arquivos_existentes)
-    extracoes = extract_zip_files.expand(zip_paths=downloads)
+    downloads = EmptyOperator(task_id="downloads")
+    baixa_arquivos = download_zip_file.expand(file_to_download=arquivos_existentes)
+    extracoes = extract_zip_files.expand(zip_paths=baixa_arquivos)
+    seta_serie = seta_serie_para_diaria()
 
+    # Definindo a sequência
     inicio >> tipo_serie >> if_tipo_serie_then >> lista_final >> arquivos_existentes >> escolha
-    escolha >> downloads >> extracoes
-    [extracoes, escolha] >> fim
+    escolha >> downloads
+    downloads >> baixa_arquivos >> extracoes >> seta_serie
+    [seta_serie, escolha] >> fim
+
 
 
 dag = b3_etl()
